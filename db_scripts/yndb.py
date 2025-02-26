@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
-from datetime import timedelta, date, datetime
 import os
+from datetime import datetime, timedelta
 import pytz
 
 load_dotenv()
@@ -65,12 +65,15 @@ def fetch_news_by_date_range(db_connection, start_date, end_date):
                 n.newskey,
                 n.newsdate,
                 n.buseid,
+                t.code_name,
                 n.gijaname,
                 n.gijaid,
                 n.delete,
                 n.ref
             FROM newsinfo n
-            WHERE DATE(n.newsdate) BETWEEN %s AND %s
+            LEFT JOIN t_code_detail t ON n.buseid = t.code 
+            WHERE t.code_group = 'DEPART_TP'
+            AND DATE(n.newsdate) BETWEEN %s AND %s
             ORDER BY n.newsdate DESC, n.newsmeun DESC
         """
 
@@ -83,30 +86,16 @@ def fetch_news_by_date_range(db_connection, start_date, end_date):
         return None
 
 
-def validate_date(date_string):
-    try:
-        datetime.strptime(date_string, '%Y-%m-%d')
-        return True
-    except ValueError:
-        return False
-
-
 def get_all_articles_for_period(start_date, end_date):
     with DatabaseConnection(**db_config) as db_connection:
         yeongnam_news = fetch_news_by_date_range(db_connection, start_date, end_date)
-        print(yeongnam_news)
         return yeongnam_news
 
 
 if __name__ == "__main__":
     analysis_period_days = 2
-    end_date = datetime.now(pytz.timezone('ROK'))
+    end_date = datetime.now()
     start_date = end_date - timedelta(analysis_period_days)
-
-    if not (validate_date(start_date.strftime('%Y-%m-%d')) and validate_date(end_date.strftime('%Y-%m-%d'))):
-        print("Invalid date format. Please use YYYY-MM-DD")
-        exit(1)
-
 
     article_ids_to_process = get_all_articles_for_period(start_date, end_date)
     print(article_ids_to_process)

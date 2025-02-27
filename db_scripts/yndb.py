@@ -92,11 +92,11 @@ def get_all_articles_for_period(start_date, end_date):
         return yeongnam_news
 
 
-if __name__ == "__main__":
-    analysis_period_days = 2
-    end_date = datetime.now()
-    start_date = end_date - timedelta(analysis_period_days)
+# if __name__ == "__main__":
+#     analysis_period_days = 2
+#     end_date = datetime.now()
+#     start_date = end_date - timedelta(analysis_period_days)
 
-    article_ids_to_process = get_all_articles_for_period(start_date, end_date)
-    print(article_ids_to_process)
+#     article_ids_to_process = get_all_articles_for_period(start_date, end_date)
+#     print(article_ids_to_process)
 

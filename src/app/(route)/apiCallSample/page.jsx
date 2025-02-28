@@ -9,16 +9,17 @@ export default function ApiCallSample() {
     fetch("/api/fetchAllArticles")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched data:", data); // Debugging API response
+        // console.log("Fetched data:", data); // Debugging API response
+
         setAllArticles(data);
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
-  console.log("Current state:", allArticles); // Logs after state updates
+  // console.log("Current state:", allArticles); // Logs after state updates
 
   if (allArticles.length === 0) {
-    return <div>Loading...</div>; 
+    return <div>Loading...</div>;
   }
 
   return (
@@ -32,16 +33,18 @@ export default function ApiCallSample() {
               <p>Visits Data:</p>
               <ul>
                 {article.visits.map((visit, idx) => (
-                  <><li key={idx}>
-                        {idx} - {JSON.stringify(visit)} {/* Convert dictionary to string */}
-                    </li><br /></>
+                  <>
+                    <li key={idx}>
+                      {idx} - {JSON.stringify(visit)} {/* Convert dictionary to string */}
+                    </li>
+                    <br />
+                  </>
                 ))}
               </ul>
             </li>
-            
           ))}
         </ul>
       </div>
     </main>
-  )
+  );
 }

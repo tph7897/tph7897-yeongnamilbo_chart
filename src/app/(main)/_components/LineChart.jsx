@@ -12,7 +12,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import weeklyVisits from "../_utils/weeklyVisits";
+import weeklyVisits from "../../_utils/weeklyVisits";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -35,9 +35,8 @@ const ChartsContainer = ({ newsData }) => {
   // 각 차트에 표시할 데이터 (단일 값이므로 X축은 한 개의 항목)
   const createChartData = (label, data, color = "rgba(75, 192, 192, 0.5)") => {
     let valueMapping;
-    if (label === "기사 조회수") {
-      valueMapping = (item) => Number(item.totalVisits);
-    } else if (label === "기사 평균 조회수") {
+
+    if (label === "기사 평균 조회수") {
       valueMapping = (item) => Number(item.averageVisits);
     } else {
       // 기본값: totalVisits 사용

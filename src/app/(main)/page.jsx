@@ -2,11 +2,12 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-import LineChart from "@/app/(main)/_components/LineChart";
+import LineChart from "@/components/LineChart";
 import { useEffect, useState } from "react";
-import ViewTable from "./_components/ViewTable";
-import ViewChart from "./_components/ViewChart";
-import PersonalViewTable from "./_components/PersonalViewTable";
+
+import ViewChart from "../../components/ViewChart";
+import PersonalViewTable from "../../components/PersonalViewTable";
+import ViewTable from "@/components/ViewTable";
 
 export default function Home() {
   const [allArticles, setAllArticles] = useState([]);

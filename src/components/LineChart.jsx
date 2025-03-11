@@ -12,7 +12,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import weeklyVisits from "../../_utils/weeklyVisits";
+import weeklyVisits from "../app/_utils/weeklyVisits";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 

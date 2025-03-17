@@ -1,155 +1,97 @@
-export function getCurrentWeekRange() {
-  const now = new Date();
-  // dayOfWeek: 0(일) ~ 6(토)
-  const dayOfWeek = now.getDay();
+export function aggregateWeeklyData(data) {
+  // 1. 원시 데이터를 주별(일요일 기준)로 그룹화
+  const weekGroups = new Map();
 
-  // 이번 주 일요일 0시 설정
-  //   = 오늘 날짜에서 dayOfWeek 일 전으로 돌린 뒤, 시분초 0으로 초기화
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  // 이번 주 토요일 23:59:59 설정
-  //   = startOfWeek + 6일, 시분초 23:59:59
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(endOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
-
-  return { startOfWeek, endOfWeek };
-}
-
-export function aggregateWeeklyData(data, startOfWeek, endOfWeek) {
-  // 1) 주간 범위(일요일~토요일)에 해당하는 기사만 필터링
-  const weeklyArticles = data.filter((article) => {
+  data.forEach((article) => {
     const newsDate = new Date(article.newsdate);
-    return newsDate >= startOfWeek && newsDate <= endOfWeek;
+    // 해당 기사의 주의 시작일(일요일 0시) 계산
+    const weekStart = new Date(newsDate);
+    const dayOfWeek = weekStart.getDay(); // 0(일) ~ 6(토)
+    weekStart.setDate(weekStart.getDate() - dayOfWeek);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekKey = weekStart.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+    if (!weekGroups.has(weekKey)) {
+      weekGroups.set(weekKey, []);
+    }
+    weekGroups.get(weekKey).push(article);
   });
 
-  // 2) 부서별 데이터 저장할 맵
-  const departmentMap = new Map();
-
-  // 3) 기사 순회하며 endOfWeek(= 토요일 23:59:59) 이전 방문자수 중 '가장 최신' 방문자 수 사용
-  weeklyArticles.forEach((article) => {
-    const department = article.code_name; // 부서명
-
-    let latestVisitValue = 0;
-    let latestVisitTime = null;
-
-    // visits에서 endOfWeek 이하이면서 가장 최근(= 가장 큰 datetime)
-    if (Array.isArray(article.visits)) {
-      article.visits.forEach((v) => {
-        const visitDate = new Date(v.datetime);
-        if (visitDate <= endOfWeek) {
-          if (!latestVisitTime || visitDate > latestVisitTime) {
-            latestVisitTime = visitDate;
-            latestVisitValue = v.visits;
-          }
-        }
-      });
-    }
-
-    // 부서별 최초 세팅
-    if (!departmentMap.has(department)) {
-      departmentMap.set(department, {
-        department,
-        totalViews: 0,
-        articleCount: 0,
-      });
-    }
-
-    const deptData = departmentMap.get(department);
-    deptData.totalViews += latestVisitValue;
-    deptData.articleCount += 1;
-  });
-
-  // 4) 결과 합산
+  // 2. 각 주별로 부서 집계 수행
   const result = [];
-  departmentMap.forEach((deptData) => {
-    const { department, totalViews, articleCount } = deptData;
-    const avg = articleCount > 0 ? totalViews / articleCount : 0;
-    const averageViews = parseFloat(avg.toFixed(2));
+  weekGroups.forEach((articles, weekKey) => {
+    // 주간 범위: 주 시작(일요일)부터 토요일 23:59:59까지
+    const weekStartDate = new Date(weekKey);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    weekEndDate.setHours(23, 59, 59, 999);
 
+    // 부서별 집계를 위한 맵 (key: 부서명)
+    const departmentMap = new Map();
+
+    articles.forEach((article) => {
+      const department = article.code_name; // 부서명
+
+      let latestVisitValue = 0;
+      let latestVisitTime = null;
+      // visits 배열에서 해당 주(토요일) 이전 또는 같은 날 기록 중 최신 방문수 선택
+      if (Array.isArray(article.visits)) {
+        article.visits.forEach((v) => {
+          const visitDate = new Date(v.datetime);
+          if (visitDate <= weekEndDate) {
+            if (!latestVisitTime || visitDate > latestVisitTime) {
+              latestVisitTime = visitDate;
+              latestVisitValue = v.visits;
+            }
+          }
+        });
+      }
+
+      if (!departmentMap.has(department)) {
+        departmentMap.set(department, {
+          department,
+          totalViews: 0,
+          articleCount: 0,
+        });
+      }
+      const deptData = departmentMap.get(department);
+      deptData.totalViews += latestVisitValue;
+      deptData.articleCount += 1;
+    });
+
+    // 3. 부서별 집계 결과 배열 생성
+    const deptArray = [];
+    departmentMap.forEach((deptData) => {
+      const { department, totalViews, articleCount } = deptData;
+      const averageViews = articleCount > 0 ? parseFloat((totalViews / articleCount).toFixed(2)) : 0;
+      deptArray.push({
+        department,
+        totalViews,
+        articleCount,
+        averageViews,
+      });
+    });
+
+    // 4. 전체부서 합산 데이터 추가 (맨 앞에 삽입)
+    const sumTotalViews = deptArray.reduce((acc, d) => acc + d.totalViews, 0);
+    const sumArticleCount = deptArray.reduce((acc, d) => acc + d.articleCount, 0);
+    const sumAverageViews = sumArticleCount > 0 ? parseFloat((sumTotalViews / sumArticleCount).toFixed(2)) : 0;
+
+    deptArray.unshift({
+      department: "전체부서",
+      totalViews: sumTotalViews,
+      articleCount: sumArticleCount,
+      averageViews: sumAverageViews,
+    });
+
+    // 5. 해당 주 결과 객체 생성 및 추가
     result.push({
-      department,
-      totalViews,
-      articleCount,
-      averageViews,
+      datetime: weekKey,
+      department: deptArray,
     });
   });
 
-  // 5) 전체부서 합산 추가 (result 맨 앞에)
-  const sumTotalViews = result.reduce((acc, d) => acc + d.totalViews, 0);
-  const sumArticleCount = result.reduce((acc, d) => acc + d.articleCount, 0);
-  const sumAverageViews = sumArticleCount > 0 ? parseFloat((sumTotalViews / sumArticleCount).toFixed(2)) : 0;
-
-  // 맨 앞에 삽입
-  result.unshift({
-    department: "전체부서",
-    totalViews: sumTotalViews,
-    articleCount: sumArticleCount,
-    averageViews: sumAverageViews,
-  });
-
+  // 6. 결과를 주 시작일 기준 오름차순 정렬 (원하는 경우 내림차순도 가능)
+  result.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   return result;
 }
-// ----------------------------------------------
-// 사용 예시:
-
-// 임의의 예시 데이터
-const data = [
-  {
-    _id: "67c10ceb54a5b9376f296c75",
-    newskey: "20250227010003450",
-    newsdate: "2025-02-23T09:00:00.000Z", // 일요일(예시)
-    buseid: 1,
-    code_name: "논설실",
-    visits: [
-      { datetime: "2025-02-25T10:10:03.168Z", visits: 21 },
-      { datetime: "2025-03-01T09:32:29.630Z", visits: 73 },
-    ],
-  },
-  {
-    _id: "67c10ceb54a5b9376f296c74",
-    newskey: "20250227010003447",
-    newsdate: "2025-02-28T12:00:00.000Z", // 금요일(예시)
-    buseid: 1,
-    code_name: "논설실",
-    visits: [
-      { datetime: "2025-02-28T10:10:03.168Z", visits: 16 },
-      { datetime: "2025-03-01T09:32:29.630Z", visits: 52 },
-    ],
-  },
-  {
-    _id: "xyz",
-    newskey: "20250227010003499",
-    newsdate: "2025-03-01T01:00:00.000Z", // 토요일 다음날 새벽 -> 범위 밖(예시)
-    buseid: 2,
-    code_name: "디지털국",
-    visits: [{ datetime: "2025-03-01T10:00:00.000Z", visits: 100 }],
-  },
-];
-
-// 이번 주 일요일~토요일 범위를 "자동"으로 계산 (로컬 기준)
-const { startOfWeek, endOfWeek } = getCurrentWeekRange();
-
-// 함수 실행
-const weeklySummary = aggregateWeeklyData(data, startOfWeek, endOfWeek);
-
-// console.log("startOfWeek:", startOfWeek);
-// console.log("endOfWeek:  ", endOfWeek);
-// console.log("weeklySummary:", weeklySummary);
-
-/**
- * 예시 출력:
- * startOfWeek: Sun Feb 23 2025 00:00:00 GMT+0000 (UTC)
- * endOfWeek:   Sat Mar 01 2025 23:59:59 GMT+0000 (UTC)
- * weeklySummary: [
- *   {
- *     department: "논설실",
- *     totalViews: 94,   // (21 + 73) + (16 + 52) = 162, 기사 2개?
- *     articleCount: 2,
- *     averageViews: 81
- *   }
- * ]
- * (단, 실제 visits/시간대에 따라 달라질 수 있음)
- */

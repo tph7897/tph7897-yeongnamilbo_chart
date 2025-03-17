@@ -89,7 +89,6 @@ function weeklyDepartmentVisits(data) {
     })
     // 날짜 순 정렬 (오름차순)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-  console.log("result", result);
   return result;
 }
 

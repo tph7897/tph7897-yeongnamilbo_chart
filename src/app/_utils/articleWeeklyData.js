@@ -1,71 +1,12 @@
-// import { getCurrentWeekRange } from "@/app/_utils/aggregateWeeklyData";
-
-// /**
-//  * 주간 기사 데이터를 변환하는 함수
-//  * 입력 데이터: 원시 뉴스 데이터 배열 (각 기사는 visits 배열을 포함)
-//  * 출력 데이터 형식:
-//  * [
-//  *   {
-//  *     title: "제목",        // 여기서는 newskey를 제목으로 사용 (필요 시 다른 필드를 사용할 수 있음)
-//  *     keyword: "",         // 키워드는 비워둠
-//  *     totalViews: 100,     // 최신 방문자수 (토요일 23:59:59 이전의 가장 최신 방문 기록)
-//  *     newsdate: "2023-04-01",  // 기사의 작성일 (YYYY-MM-DD 형식)
-//  *     category: "",        // 분류는 비워둠
-//  *     department: "부서",  // 기사에 해당하는 부서 (code_name)
-//  *     reporter: "기자",    // 기자 이름 (gijaname)
-//  *   },
-//  *   ...
-//  * ]
-//  */
-// export function transformWeeklyArticles(newsData) {
-//   const { startOfWeek, endOfWeek } = getCurrentWeekRange();
-
-//   // 이번 주 범위 내에 생성된 기사만 필터링
-//   const weeklyArticles = newsData.filter((article) => {
-//     const newsDate = new Date(article.newsdate);
-//     return newsDate >= startOfWeek && newsDate <= endOfWeek;
-//   });
-
-//   // 각 기사를 변환
-//   const transformedArticles = weeklyArticles.map((article) => {
-//     let latestVisitValue = 0;
-//     let latestVisitTime = null;
-
-//     if (Array.isArray(article.visits)) {
-//       article.visits.forEach((v) => {
-//         const visitDate = new Date(v.datetime);
-//         // 토요일 23:59:59 이전의 방문 기록 중 가장 최신의 방문수를 선택
-//         if (visitDate <= endOfWeek) {
-//           if (!latestVisitTime || visitDate > latestVisitTime) {
-//             latestVisitTime = visitDate;
-//             latestVisitValue = v.visits;
-//           }
-//         }
-//       });
-//     }
-
-//     // 작성일시를 ISO 형식 ("2025-03-03T00:00:00.000Z")으로 변환
-//     const dateObj = new Date(article.newsdate);
-//     const year = String(dateObj.getFullYear()).slice(-2);
-//     const month = ("0" + (dateObj.getMonth() + 1)).slice(-2);
-//     const day = ("0" + dateObj.getDate()).slice(-2);
-//     const formattedNewsDate = `${year}.${month}.${day}`;
-//     return {
-//       title: article.newstitle, // 기사 제목 자리 (newskey 사용)
-//       newskey: article.newskey, // 기사 제목 자리 (newskey 사용)
-//       keyword: article.keyword, // 키워드는 비워둠
-//       totalViews: latestVisitValue,
-//       newsdate: formattedNewsDate,
-//       category: article.newsclass_names, // 분류는 비워둠
-//       department: article.code_name,
-//       reporter: article.gijaname,
-//     };
-//   });
-
-//   return transformedArticles;
-// }
-
 export function transformWeeklyArticles(newsData) {
+  // 로컬 날짜를 "YYYY-MM-DD" 형식으로 포맷하는 함수
+  function formatLocalDate(date) {
+    const year = date.getFullYear();
+    const month = ("0" + (date.getMonth() + 1)).slice(-2);
+    const day = ("0" + date.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+
   // 그룹을 저장할 Map: key는 해당 주 토요일 날짜("YYYY-MM-DD"), value는 { datetime, articles }
   const groups = new Map();
 
@@ -78,7 +19,8 @@ export function transformWeeklyArticles(newsData) {
     const saturday = new Date(articleDate);
     saturday.setDate(articleDate.getDate() + diff);
     saturday.setHours(0, 0, 0, 0);
-    const groupKey = saturday.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    // 로컬 날짜 형식으로 groupKey 생성
+    const groupKey = formatLocalDate(saturday); // "YYYY-MM-DD"
 
     // visits 배열에서 토요일(그룹 기준) 이전(포함) 기록 중 가장 최신의 방문수 선택
     let latestVisitValue = 0;

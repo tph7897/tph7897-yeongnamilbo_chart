@@ -36,7 +36,7 @@ export default function Home() {
       <Card className="m-8">
         <CardHeader>
           <CardTitle>영남일보 조회수 현황</CardTitle>
-          <CardDescription>일주일 단위 조회수 체크 매주 토요일 24:00 기준</CardDescription>
+          <CardDescription>※ 매주 토요일 기준으로 산정되어 그 주에 업로드된 기사만 반영됩니다. (기사가 업로드된 후 일주일 후에 조회수가 급상승한다면 반영되지 않습니다.)</CardDescription>
         </CardHeader>
         <CardContent>
           <ViewChart newsData={allArticles} />

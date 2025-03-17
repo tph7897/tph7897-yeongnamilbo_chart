@@ -1,28 +1,37 @@
+// 로컬 날짜를 "YYYY-MM-DD" 형식으로 포맷하는 함수
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = ("0" + (date.getMonth() + 1)).slice(-2);
+  const day = ("0" + date.getDate()).slice(-2);
+  return `${year}-${month}-${day}`;
+}
+
 export function personalWeeklyData(data) {
-  // 1. 원시 데이터를 주별(일요일 기준)로 그룹화합니다.
+  // 1. 원시 데이터를 주별(기사가 속한 주의 토요일 기준)로 그룹화합니다.
   const weekGroups = new Map();
 
   data.forEach((article) => {
     const newsDate = new Date(article.newsdate);
-    const dayOfWeek = newsDate.getDay(); // 0(일) ~ 6(토)
-    const weekStart = new Date(newsDate);
-    weekStart.setDate(weekStart.getDate() - dayOfWeek);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekKey = weekStart.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    // 해당 기사가 속한 주의 토요일을 계산 (getDay(): 0(일) ~ 6(토))
+    const day = newsDate.getDay();
+    const diff = 6 - day; // 토요일까지 남은 일수
+    const saturday = new Date(newsDate);
+    saturday.setDate(newsDate.getDate() + diff);
+    saturday.setHours(0, 0, 0, 0);
+    // 로컬 날짜 형식으로 그룹 키 생성 (예: "2025-03-22")
+    const groupKey = formatLocalDate(saturday);
 
-    if (!weekGroups.has(weekKey)) {
-      weekGroups.set(weekKey, []);
+    if (!weekGroups.has(groupKey)) {
+      weekGroups.set(groupKey, []);
     }
-    weekGroups.get(weekKey).push(article);
+    weekGroups.get(groupKey).push(article);
   });
 
   // 2. 각 주별로 기자+부서별 집계를 수행합니다.
   const result = [];
   weekGroups.forEach((articles, weekKey) => {
-    // 주간 종료일(토요일 23:59:59) 계산
-    const weekStartDate = new Date(weekKey);
-    const weekEndDate = new Date(weekStartDate);
-    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    // 주간 종료일(토요일 23:59:59) 계산 (토요일 기준)
+    const weekEndDate = new Date(weekKey);
     weekEndDate.setHours(23, 59, 59, 999);
 
     // 기자+부서별 집계를 위한 맵 (compound key: "부서||기자")
@@ -82,12 +91,12 @@ export function personalWeeklyData(data) {
 
     // 5. 주별 결과 객체 생성
     result.push({
-      datetime: weekKey,
+      datetime: weekKey, // 여기에 로컬 토요일 날짜가 들어갑니다.
       reporters: reportersArray,
     });
   });
 
-  // 6. 주 시작일 기준 오름차순 정렬
+  // 6. 주 시작일(토요일 기준) 오름차순 정렬
   result.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   return result;
 }

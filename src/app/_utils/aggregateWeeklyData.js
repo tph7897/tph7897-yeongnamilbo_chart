@@ -1,29 +1,37 @@
+// 로컬 날짜를 "YYYY-MM-DD" 형식으로 포맷하는 함수
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = ("0" + (date.getMonth() + 1)).slice(-2);
+  const day = ("0" + date.getDate()).slice(-2);
+  return `${year}-${month}-${day}`;
+}
+
 export function aggregateWeeklyData(data) {
-  // 1. 원시 데이터를 주별(일요일 기준)로 그룹화
+  // 1. 원시 데이터를 주별(각 기사의 기준 토요일)로 그룹화
   const weekGroups = new Map();
 
   data.forEach((article) => {
     const newsDate = new Date(article.newsdate);
-    // 해당 기사의 주의 시작일(일요일 0시) 계산
-    const weekStart = new Date(newsDate);
-    const dayOfWeek = weekStart.getDay(); // 0(일) ~ 6(토)
-    weekStart.setDate(weekStart.getDate() - dayOfWeek);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekKey = weekStart.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    // 해당 기사의 주의 토요일 계산
+    const day = newsDate.getDay(); // 0(일) ~ 6(토)
+    const diff = 6 - day; // 토요일까지 남은 일수
+    const saturday = new Date(newsDate);
+    saturday.setDate(newsDate.getDate() + diff);
+    saturday.setHours(0, 0, 0, 0);
+    // 로컬 날짜를 사용해 그룹키 생성 (토요일 날짜)
+    const groupKey = formatLocalDate(saturday); // "YYYY-MM-DD"
 
-    if (!weekGroups.has(weekKey)) {
-      weekGroups.set(weekKey, []);
+    if (!weekGroups.has(groupKey)) {
+      weekGroups.set(groupKey, []);
     }
-    weekGroups.get(weekKey).push(article);
+    weekGroups.get(groupKey).push(article);
   });
 
   // 2. 각 주별로 부서 집계 수행
   const result = [];
   weekGroups.forEach((articles, weekKey) => {
-    // 주간 범위: 주 시작(일요일)부터 토요일 23:59:59까지
-    const weekStartDate = new Date(weekKey);
-    const weekEndDate = new Date(weekStartDate);
-    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    // 주간 범위: 이번 그룹의 토요일(그룹키)을 기준으로, 해당 토요일 23:59:59까지
+    const weekEndDate = new Date(weekKey);
     weekEndDate.setHours(23, 59, 59, 999);
 
     // 부서별 집계를 위한 맵 (key: 부서명)
@@ -34,7 +42,7 @@ export function aggregateWeeklyData(data) {
 
       let latestVisitValue = 0;
       let latestVisitTime = null;
-      // visits 배열에서 해당 주(토요일) 이전 또는 같은 날 기록 중 최신 방문수 선택
+      // visits 배열에서 해당 토요일 이전 또는 같은 날 기록 중 최신 방문수 선택
       if (Array.isArray(article.visits)) {
         article.visits.forEach((v) => {
           const visitDate = new Date(v.datetime);
@@ -59,7 +67,7 @@ export function aggregateWeeklyData(data) {
       deptData.articleCount += 1;
     });
 
-    // 3. 부서별 집계 결과 배열 생성
+    // 3. 부서별 집계 결과 배열 생성 (평균 조회수 포함)
     const deptArray = [];
     departmentMap.forEach((deptData) => {
       const { department, totalViews, articleCount } = deptData;
@@ -86,12 +94,12 @@ export function aggregateWeeklyData(data) {
 
     // 5. 해당 주 결과 객체 생성 및 추가
     result.push({
-      datetime: weekKey,
+      datetime: weekKey, // 토요일 날짜가 그룹키로 들어감
       department: deptArray,
     });
   });
 
-  // 6. 결과를 주 시작일 기준 오름차순 정렬 (원하는 경우 내림차순도 가능)
+  // 6. 결과를 주 시작일 기준 오름차순 정렬
   result.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   return result;
 }

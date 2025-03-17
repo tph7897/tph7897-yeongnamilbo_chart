@@ -19,7 +19,6 @@ const columns = [
 const ArticleViewTable = ({ newsData }) => {
   // 주간 데이터 그룹(토요일 기준)으로 변환: 각 그룹은 { datetime, articles } 형식입니다.
   const groups = useMemo(() => transformWeeklyArticles(newsData), [newsData]);
-
   // 기본 선택: 그룹이 존재하면 최신 날짜(마지막 그룹의 datetime)를 기본값으로 설정
   const [selectedDatetime, setSelectedDatetime] = useState("");
 

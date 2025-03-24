@@ -89,6 +89,7 @@ const ArticleViewTable = ({ newsData }) => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>순번</TableHead>
                 {columns.map((col) => (
                   <TableHead key={col.key} className="p-0">
                     <Button variant="ghost" onClick={() => handleSort(col.key)}>
@@ -99,8 +100,9 @@ const ArticleViewTable = ({ newsData }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedArticles.map((item) => (
+              {sortedArticles.map((item, index) => (
                 <TableRow key={item.newskey}>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     <a href={`https://www.yeongnam.com/web/view.php?key=${item.newskey}`} target="_blank" rel="noopener noreferrer">
                       {item.title}

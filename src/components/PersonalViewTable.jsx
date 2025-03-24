@@ -27,6 +27,7 @@ const PersonalViewTable = ({ newsData }) => {
   useEffect(() => {
     if (newsData && newsData.length > 0) {
       const aggregated = personalWeeklyData(newsData);
+      console.log("aggregated", aggregated);
       setWeeklyData(aggregated);
     }
   }, [newsData]);
@@ -49,13 +50,13 @@ const PersonalViewTable = ({ newsData }) => {
     if (selectedDepartment === "전체 부서") {
       return reportersData;
     }
-    return reportersData.filter((item) => item.department === selectedDepartment || item.department === "전체부서");
+    return reportersData.filter((item) => (item.department && item.department.trim() ? item.department : "-") === selectedDepartment || item.department === "전체부서");
   }, [reportersData, selectedDepartment]);
 
   // 정렬: "전체부서" 행은 항상 최상단, 나머지 데이터는 정렬
   const sortedData = useMemo(() => {
-    const specialRows = filteredData.filter((item) => item.department === "전체부서");
-    const restRows = filteredData.filter((item) => item.department !== "전체부서");
+    const specialRows = filteredData.filter((item) => item.department === "전체 부서");
+    const restRows = filteredData.filter((item) => item.department !== "전체 부서");
 
     let sortedRest = restRows;
     if (sortColumn) {
@@ -84,7 +85,9 @@ const PersonalViewTable = ({ newsData }) => {
   const departmentOptions = useMemo(() => {
     const deptSet = new Set();
     reportersData.forEach((item) => {
-      deptSet.add(item.department);
+      // 부서명이 빈 문자열이면 "-" 처리
+      const dept = item.department && item.department.trim() ? item.department : "-";
+      deptSet.add(dept);
     });
     return ["전체 부서", ...Array.from(deptSet)];
   }, [reportersData]);
@@ -122,11 +125,13 @@ const PersonalViewTable = ({ newsData }) => {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>부서</SelectLabel>
-                  {departmentOptions.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
+                  {departmentOptions
+                    .filter((dept) => dept !== "전체부서")
+                    .map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -149,7 +154,7 @@ const PersonalViewTable = ({ newsData }) => {
               {sortedData.map((item, index) => (
                 <TableRow key={`${item.department}-${item.reporter}-${index}`}>
                   <TableCell>{item.reporter}</TableCell>
-                  <TableCell className="font-medium">{item.department}</TableCell>
+                  <TableCell className="font-medium">{item.department && item.department.trim() ? item.department : "-"}</TableCell>
                   <TableCell>{item.totalViews}</TableCell>
                   <TableCell>{item.articleCount}</TableCell>
                   <TableCell>{item.averageViews}</TableCell>

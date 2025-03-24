@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import ArticleViewTable from "@/components/ArticleViewTable";
 import DepartmentViewTable from "@/components/DepartmentViewTable";
 import { useEffect, useState } from "react";
+// import { CalendarDateRangePicker } from "@/components/CalendarDateRangePicker";
 
 export default function Home() {
   const [allArticles, setAllArticles] = useState([]);
@@ -16,9 +17,10 @@ export default function Home() {
     fetch("/api/fetchAllArticles")
       .then((response) => response.json())
       .then((data) => {
-        const thresholdDate = new Date("2025-02-23T00:00:00.000Z");
-        const filteredData = data.filter((item) => new Date(item.newsdate) >= thresholdDate);
-        setAllArticles(filteredData);
+        // const thresholdDate = new Date("2025-02-23T00:00:00.000Z");
+        // const filteredData = data.filter((item) => new Date(item.newsdate) >= thresholdDate);
+        setAllArticles(data);
+        console.log("data", data);
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, []);
@@ -36,9 +38,10 @@ export default function Home() {
       <Card className="m-8">
         <CardHeader>
           <CardTitle>영남일보 조회수 현황</CardTitle>
-          <CardDescription>※ 매주 토요일 기준으로 산정되어 그 주에 업로드된 기사만 반영됩니다. (기사가 업로드된 후 일주일 후에 조회수가 급상승한다면 반영되지 않습니다.)</CardDescription>
+          <CardDescription></CardDescription>
         </CardHeader>
         <CardContent>
+          {/* <CalendarDateRangePicker /> */}
           <ViewChart newsData={allArticles} />
           <div className="m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
             <Button variant={activeComponent === "department" ? "secondary" : "ghost"} onClick={() => handleButtonClick("department")}>

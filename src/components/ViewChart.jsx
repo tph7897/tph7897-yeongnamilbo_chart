@@ -1,32 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import weeklyDepartmentVisits from "@/app/_utils/weeklyDepartmentVisits";
-import transformWeeklyDataToChartData from "@/app/_utils/transformWeeklyDataToChartData";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-const chartData = [
-  { date: "2024-04-01", total: 222, digital: 150 },
-  { date: "2024-04-02", total: 97, digital: 180 },
-  { date: "2024-04-03", total: 167, digital: 120 },
-  { date: "2024-04-04", total: 242, digital: 260 },
-  { date: "2024-04-05", total: 373, digital: 290 },
-];
-const departments = ["전체 부서", "경북부(지역)", "디지털뉴스부", "경제_산업팀", "경북본사", "사회1팀", "콘텐츠_문화팀", "사회2팀", "경제_경제팀", "사진팀", "정치_서울본부", "기획취재부", "편집국", "콘텐츠_체육팀", "정치_대구", "사회3팀", "경제", "편집팀", "디지털국", "디지털컨텐츠팀", "정치", "논설실"];
-
-// const chartConfig = departments.reduce((acc, dept, index) => {
-//   acc[dept] = {
-//     label: dept,
-//     color: `hsl(var(--chart-${index + 1}))`,
-//   };
-//   return acc;
-// }, {});
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import transformNewsDataToWeeklyData from "@/app/_utils/transformWeeklyDataToChartData";
+import { Button } from "./ui/button";
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
   total: {
     label: "전체부서",
     color: "hsl(var(--chart-1))",
@@ -37,36 +17,55 @@ const chartConfig = {
   },
 };
 
-// const getSafeId = (dept) => dept.replace(/\s+/g, "").replace(/[^a-zA-Z0-9]/g, "");
-
 const ViewChart = ({ newsData }) => {
-  const [chartData, setChartData] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [activeComponent, setActiveComponent] = useState("year"); // "year" 또는 "3month"
 
   useEffect(() => {
-    const data = weeklyDepartmentVisits(newsData);
-    const filteredData = transformWeeklyDataToChartData(data);
-    setChartData(filteredData);
+    if (newsData && newsData.length > 0) {
+      const aggregated = transformNewsDataToWeeklyData(newsData);
+      setWeeklyData(aggregated);
+    }
   }, [newsData]);
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date("2025-03-01");
+  // weeklyData와 activeComponent가 변경될 때마다 필터링된 데이터를 재계산합니다.
+  const filteredWeeklyData = useMemo(() => {
+    // 현재 날짜에서 1년 또는 3달 전의 날짜를 계산합니다.
+    const cutoff = new Date();
+    if (activeComponent === "year") {
+      cutoff.setFullYear(cutoff.getFullYear() - 1);
+    } else if (activeComponent === "3month") {
+      cutoff.setMonth(cutoff.getMonth() - 3);
+    }
+    // 가공된 데이터의 date는 ISO 형식의 문자열(토요일 날짜)입니다.
+    return weeklyData.filter((item) => new Date(item.date) >= cutoff);
+  }, [weeklyData, activeComponent]);
 
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - 90);
-    return date >= startDate;
-  });
+  const handleButtonClick = (component) => {
+    setActiveComponent(component);
+  };
+
   return (
     <Card className="m-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>부서별 조회수 현황</CardTitle>
-          <CardDescription></CardDescription>
+        <div className="flex ">
+          <div>
+            <CardTitle>부서별 조회수 현황 (주별)</CardTitle>
+            <CardDescription>매주 일요일 ~ 토요일 기준</CardDescription>
+          </div>
+          <div className="">
+            <Button variant={activeComponent === "year" ? "secondary" : "ghost"} onClick={() => handleButtonClick("year")}>
+              최근 1년
+            </Button>
+            <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
+              최근 3개월
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-          <AreaChart data={filteredData}>
+        <ChartContainer className="aspect-auto h-[250px] w-full" config={chartConfig}>
+          <AreaChart data={filteredWeeklyData}>
             <defs>
               <linearGradient id="filltotal" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-total)" stopOpacity={0.8} />
@@ -85,10 +84,9 @@ const ViewChart = ({ newsData }) => {
               tickMargin={8}
               tickFormatter={(value) => {
                 const date = new Date(value);
-                return date.toLocaleDateString("ko-KR", {
-                  month: "short",
-                  day: "numeric",
-                });
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${month}.${day}`;
               }}
             />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} tickCount={3} />
@@ -97,18 +95,17 @@ const ViewChart = ({ newsData }) => {
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("ko-KR", {
-                      month: "short",
-                      day: "numeric",
-                    });
+                    const date = new Date(value);
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    return `${month}.${day}`;
                   }}
                   indicator="dot"
                 />
               }
             />
-            <Area dataKey="디지털뉴스부" type="natural" fill="url(#filldigital)" fillOpacity={0.4} stroke="var(--color-digital)" stackId="a" />
-            <Area dataKey="전체부서" type="natural" fill="url(#filltotal)" fillOpacity={0.4} stroke="var(--color-total)" stackId="a" />
-            {/* <ChartLegend content={<ChartLegendContent nameKey="label" />} /> */}
+            <Area dataKey="digital" type="natural" fill="url(#filldigital)" fillOpacity={0.4} stroke="var(--color-digital)" stackId="a" />
+            <Area dataKey="total" type="natural" fill="url(#filltotal)" fillOpacity={0.4} stroke="var(--color-total)" stackId="a" />
           </AreaChart>
         </ChartContainer>
       </CardContent>

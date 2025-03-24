@@ -6,13 +6,36 @@ function formatLocalDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+const buseCode = {
+  1006: "정치",
+  1007: "정치_대구",
+  1008: "정치_서울본부",
+  1010: "경제",
+  1011: "경제_경제팀",
+  1012: "사회1팀",
+  1013: "사회2팀",
+  1015: "콘텐츠_문화팀",
+  1016: "콘텐츠_문화팀",
+  1018: "종교팀",
+  1019: "경북본사",
+  1020: "경북부(지역)",
+};
+
 export function personalWeeklyData(data) {
   // 1. 원시 데이터를 주별(기사가 속한 주의 토요일 기준)로 그룹화합니다.
   const weekGroups = new Map();
 
   data.forEach((article) => {
+    // code_name이 빈 문자열이면, buseCode에서 buseid 값을 기반으로 부서명 채우기
+    if (!article.code_name || article.code_name.trim() === "") {
+      const buseid = Number(article.buseid);
+      if (buseCode[buseid]) {
+        article.code_name = buseCode[buseid];
+      }
+    }
+
     const newsDate = new Date(article.newsdate);
-    // 해당 기사가 속한 주의 토요일을 계산 (getDay(): 0(일) ~ 6(토))
+    // 해당 기사가 속한 주의 토요일 계산 (getDay(): 0(일) ~ 6(토))
     const day = newsDate.getDay();
     const diff = 6 - day; // 토요일까지 남은 일수
     const saturday = new Date(newsDate);
@@ -30,7 +53,7 @@ export function personalWeeklyData(data) {
   // 2. 각 주별로 기자+부서별 집계를 수행합니다.
   const result = [];
   weekGroups.forEach((articles, weekKey) => {
-    // 주간 종료일(토요일 23:59:59) 계산 (토요일 기준)
+    // 주간 종료일(토요일 23:59:59) 계산
     const weekEndDate = new Date(weekKey);
     weekEndDate.setHours(23, 59, 59, 999);
 
@@ -41,19 +64,8 @@ export function personalWeeklyData(data) {
       const department = article.code_name;
       const key = `${department}||${reporter}`;
 
-      let latestVisitValue = 0;
-      let latestVisitTime = null;
-      if (Array.isArray(article.visits)) {
-        article.visits.forEach((v) => {
-          const visitDate = new Date(v.datetime);
-          if (visitDate <= weekEndDate) {
-            if (!latestVisitTime || visitDate > latestVisitTime) {
-              latestVisitTime = visitDate;
-              latestVisitValue = v.visits;
-            }
-          }
-        });
-      }
+      // 새 데이터 형식: 조회수는 ref 필드를 사용 (문자열일 수 있으므로 숫자로 변환)
+      const viewCount = Number(article.ref) || 0;
 
       if (!groupMap.has(key)) {
         groupMap.set(key, {
@@ -64,7 +76,7 @@ export function personalWeeklyData(data) {
         });
       }
       const groupData = groupMap.get(key);
-      groupData.totalViews += latestVisitValue;
+      groupData.totalViews += viewCount;
       groupData.articleCount += 1;
     });
 
@@ -72,8 +84,7 @@ export function personalWeeklyData(data) {
     const reportersArray = [];
     groupMap.forEach((groupData) => {
       const { department, reporter, totalViews, articleCount } = groupData;
-      const avg = articleCount > 0 ? totalViews / articleCount : 0;
-      const averageViews = parseFloat(avg.toFixed(2));
+      const averageViews = articleCount > 0 ? parseFloat((totalViews / articleCount).toFixed(2)) : 0;
       reportersArray.push({ department, reporter, totalViews, articleCount, averageViews });
     });
 
@@ -91,12 +102,12 @@ export function personalWeeklyData(data) {
 
     // 5. 주별 결과 객체 생성
     result.push({
-      datetime: weekKey, // 여기에 로컬 토요일 날짜가 들어갑니다.
+      datetime: weekKey, // 그룹키(토요일 날짜)가 들어갑니다.
       reporters: reportersArray,
     });
   });
 
-  // 6. 주 시작일(토요일 기준) 오름차순 정렬
+  // 6. 결과를 주 시작일(토요일 기준) 오름차순 정렬
   result.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   return result;
 }

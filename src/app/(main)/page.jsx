@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import ArticleViewTable from "@/components/ArticleViewTable";
 import DepartmentViewTable from "@/components/DepartmentViewTable";
 import { useEffect, useState } from "react";
-// import { CalendarDateRangePicker } from "@/components/CalendarDateRangePicker";
 
 export default function Home() {
   const [allArticles, setAllArticles] = useState([]);
@@ -41,7 +40,6 @@ export default function Home() {
           <CardDescription></CardDescription>
         </CardHeader>
         <CardContent>
-          {/* <CalendarDateRangePicker /> */}
           <ViewChart newsData={allArticles} />
           <div className="m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
             <Button variant={activeComponent === "department" ? "secondary" : "ghost"} onClick={() => handleButtonClick("department")}>

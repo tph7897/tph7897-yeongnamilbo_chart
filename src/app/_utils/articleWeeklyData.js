@@ -1,3 +1,5 @@
+import personBuse from "@/app/data/personBuse"; // 추가: personBuse import
+
 export function transformWeeklyArticles(newsData) {
   // 부서 매핑 객체
   const buseCode = {
@@ -23,6 +25,32 @@ export function transformWeeklyArticles(newsData) {
     return `${year}-${month}-${day}`;
   }
 
+  // 새로운 함수: 개별 기사를 변환하는 함수
+  function transformArticle(article) {
+    const d = new Date(article.newsdate);
+    const yy = String(d.getFullYear()).slice(-2);
+    const mm = ("0" + (d.getMonth() + 1)).slice(-2);
+    const dd = ("0" + d.getDate()).slice(-2);
+    const formattedNewsDate = `${yy}.${mm}.${dd}`;
+    const latestVisitValue = Number(article.ref) || 0;
+    
+    return {
+      category: Array.isArray(article.newsclass_names)
+        ? article.newsclass_names
+        : article.newsclass_names
+        ? [article.newsclass_names]
+        : [],
+      // 부서: personBuse 매핑 사용, 없으면 code_name 사용
+      department: personBuse[article.byline_gijaname] || article.code_name,
+      keyword: article.keyword || "",
+      newsdate: formattedNewsDate,
+      newskey: article.newskey,
+      reporter: article.byline_gijaname,
+      title: article.newstitle,
+      totalViews: latestVisitValue,
+    };
+  }
+
   // 그룹을 저장할 Map: key는 해당 주 토요일 날짜("YYYY-MM-DD"), value는 { datetime, articles }
   const groups = new Map();
 
@@ -35,38 +63,17 @@ export function transformWeeklyArticles(newsData) {
       }
     }
 
-    // 기사 작성일을 Date 객체로 파싱
+    // 기사 작성일을 Date 객체로 파싱 및 주 토요일 계산
     const articleDate = new Date(article.newsdate);
-    // 해당 기사가 속한 주의 토요일을 계산 (getDay(): 0(일) ~ 6(토))
     const day = articleDate.getDay();
-    const diff = 6 - day; // 토요일까지 남은 일수
+    const diff = 6 - day;
     const saturday = new Date(articleDate);
     saturday.setDate(articleDate.getDate() + diff);
     saturday.setHours(0, 0, 0, 0);
-    // 로컬 날짜 형식으로 groupKey 생성
     const groupKey = formatLocalDate(saturday); // "YYYY-MM-DD"
 
-    // 조회수는 ref 필드를 사용 (문자열일 경우 숫자로 변환)
-    const latestVisitValue = Number(article.ref) || 0;
-
-    // 작성일(newsdate)을 "YY.MM.DD" 형식으로 변환
-    const d = new Date(article.newsdate);
-    const yy = String(d.getFullYear()).slice(-2);
-    const mm = ("0" + (d.getMonth() + 1)).slice(-2);
-    const dd = ("0" + d.getDate()).slice(-2);
-    const formattedNewsDate = `${yy}.${mm}.${dd}`;
-
-    // transformed article 객체 생성
-    const transformedArticle = {
-      category: Array.isArray(article.newsclass_names) ? article.newsclass_names : article.newsclass_names ? [article.newsclass_names] : [],
-      department: article.code_name,
-      keyword: article.keyword || "",
-      newsdate: formattedNewsDate,
-      newskey: article.newskey,
-      reporter: article.gijaname,
-      title: article.newstitle,
-      totalViews: latestVisitValue,
-    };
+    // 개별 기사 데이터를 transformArticle 함수를 사용해 변환
+    const transformedArticle = transformArticle(article);
 
     // 그룹에 추가 (이미 존재하면 배열에 push, 없으면 새 그룹 생성)
     if (groups.has(groupKey)) {

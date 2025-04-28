@@ -16,8 +16,6 @@ export default function Home() {
     fetch("/api/fetchAllArticles")
       .then((response) => response.json())
       .then((data) => {
-        // const thresholdDate = new Date("2025-02-23T00:00:00.000Z");
-        // const filteredData = data.filter((item) => new Date(item.newsdate) >= thresholdDate);
         setAllArticles(data);
         console.log("data", data);
       })

@@ -19,7 +19,7 @@ const chartConfig = {
 
 const ViewChart = ({ newsData }) => {
   const [weeklyData, setWeeklyData] = useState([]);
-  const [activeComponent, setActiveComponent] = useState("year"); // "year" 또는 "3month"
+  const [activeComponent, setActiveComponent] = useState("3month"); // "year" 또는 "3month"
 
   useEffect(() => {
     if (newsData && newsData.length > 0) {
@@ -54,9 +54,9 @@ const ViewChart = ({ newsData }) => {
             <CardDescription>매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
           <div className="">
-            <Button variant={activeComponent === "year" ? "secondary" : "ghost"} onClick={() => handleButtonClick("year")}>
+            {/* <Button variant={activeComponent === "year" ? "secondary" : "ghost"} onClick={() => handleButtonClick("year")}>
               최근 1년
-            </Button>
+            </Button> */}
             <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
               최근 3개월
             </Button>

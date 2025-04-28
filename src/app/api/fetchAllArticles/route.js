@@ -10,19 +10,15 @@ export async function GET(request) {
 
     // Specify exactly the fields you want to retrieve
     const projection = {
-      buseid: 1,
-      byline_gijaname: 1,
-      code_name: 1,
-      delete: 1,
-      gijaname: 1,
-      keyword: 1,
-      newsclass_ids: 1,
+      newsdate : 1, 
+      newskey : 1,
+      code_name : 1,
+      byline_gijaname: 1, 
+      newsclassid: 1,
       newsclass_names: 1,
-      newsdate: 1,
-      newskey: 1,
-      newstitle: 1,
+      newstitle: 1, 
       ref: 1,
-      _id: 0  // Explicitly exclude _id unless you need it
+
     };
 
     const optimizedArticlesData = await articlesCollection

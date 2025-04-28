@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 
 const columns = [
   { label: "기사제목", key: "title" },
-  { label: "기사 키워드", key: "keyword" },
   { label: "조회수", key: "totalViews" },
   { label: "작성일", key: "newsdate" },
   { label: "분류", key: "category" },
@@ -34,8 +33,8 @@ const ArticleViewTable = ({ newsData }) => {
   const articlesForSelectedWeek = selectedGroup ? selectedGroup.articles : [];
 
   // 정렬 상태 관리: sortColumn과 sortDirection
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [sortColumn, setSortColumn] = useState("totalViews");
+  const [sortDirection, setSortDirection] = useState("desc");
 
   const handleSort = (columnKey) => {
     if (sortColumn === columnKey) {
@@ -108,12 +107,17 @@ const ArticleViewTable = ({ newsData }) => {
                       {item.title}
                     </a>
                   </TableCell>
-                  <TableCell className="font-medium">{item.keyword}</TableCell>
                   <TableCell>{item.totalViews}</TableCell>
                   <TableCell>{item.newsdate}</TableCell>
-                  <TableCell>{item.category}</TableCell>
+                  <TableCell>
+                    {Array.isArray(item.category) ? item.category.join(", ") : item.category}
+                  </TableCell>
                   <TableCell>{item.department}</TableCell>
-                  <TableCell>{item.reporter}</TableCell>
+                  <TableCell>
+                    {item.reporter && item.reporter.length > 6
+                      ? item.reporter.slice(0, 7) + "..."
+                      : item.reporter}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

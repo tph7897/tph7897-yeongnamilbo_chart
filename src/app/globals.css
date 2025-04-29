@@ -67,3 +67,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 768px) {
+  body {
+    font-size: 1.125rem; /* 조정된 글자 크기 */
+  }
+}

@@ -38,16 +38,30 @@ export default function Home() {
           <CardDescription></CardDescription>
         </CardHeader>
         <CardContent>
-          <ViewChart newsData={allArticles} />
+          <div className="hidden md:block">
+            <ViewChart newsData={allArticles} />
+          </div>
           <div className="m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
-            <Button variant={activeComponent === "department" ? "secondary" : "ghost"} onClick={() => handleButtonClick("department")}>
-              부서별 조회수
+            <Button 
+              variant={activeComponent === "department" ? "secondary" : "ghost"} 
+              onClick={() => handleButtonClick("department")}
+            >
+              <span className="md:hidden">부서별</span>
+              <span className="hidden md:inline-block">부서별 조회수</span>
             </Button>
-            <Button variant={activeComponent === "reporter" ? "secondary" : "ghost"} onClick={() => handleButtonClick("reporter")}>
-              기자별 조회수
+            <Button 
+              variant={activeComponent === "reporter" ? "secondary" : "ghost"} 
+              onClick={() => handleButtonClick("reporter")}
+            >
+              <span className="md:hidden">기자별</span>
+              <span className="hidden md:inline-block">기자별 조회수</span>
             </Button>
-            <Button variant={activeComponent === "article" ? "secondary" : "ghost"} onClick={() => handleButtonClick("article")}>
-              기사별 조회수
+            <Button 
+              variant={activeComponent === "article" ? "secondary" : "ghost"} 
+              onClick={() => handleButtonClick("article")}
+            >
+              <span className="md:hidden">기사별</span>
+              <span className="hidden md:inline-block">기사별 조회수</span>
             </Button>
           </div>
           <div className="flex justify-between">

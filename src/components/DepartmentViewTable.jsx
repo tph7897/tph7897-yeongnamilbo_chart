@@ -97,7 +97,7 @@ const DepartmentViewTable = ({ newsData }) => {
     <div className="w-full flex items-center justify-center">
       <Card className="mx-2">
         <CardHeader className="w-full flex items-center border-b py-5 sm:flex-row">
-          <CardTitle className="mr-auto">부서별 조회수 현황</CardTitle>
+          <CardTitle className="sm:mr-auto">부서별 조회수 현황</CardTitle>
           <Select onValueChange={(value) => setSelectedWeek(value)} defaultValue={selectedWeek}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder={selectedWeek ? new Date(selectedWeek).toLocaleDateString() : "주 선택"} />

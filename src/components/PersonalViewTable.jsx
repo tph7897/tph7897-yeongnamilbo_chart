@@ -133,9 +133,9 @@ const PersonalViewTable = ({ newsData }) => {
     <div className="w-full flex items-center justify-center">
       <Card className="m-2">
         <CardHeader className="w-full flex flex-col sm:flex-row items-center border-b py-5 gap-2">
-          <CardTitle className="mr-auto">기자별 조회수 현황</CardTitle>
+          <CardTitle className="sm:mr-auto">기자별 조회수 현황</CardTitle>
           <div className="flex gap-2">
-            {/* 첫 번째 Select: 주 선택 */}
+           
             <Select onValueChange={(value) => setSelectedWeek(value)} defaultValue={selectedWeek}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder={selectedWeek ? new Date(selectedWeek).toLocaleDateString() : "주 선택"}>
@@ -181,7 +181,8 @@ const PersonalViewTable = ({ newsData }) => {
             <TableHeader>
               <TableRow>
                 {columns.map((col) => (
-                  <TableHead key={col.key} className="p-0">
+                  // 변경: 부서 컬럼은 모바일에서 숨김
+                  <TableHead key={col.key} className={`p-0 ${col.key === "department" ? "hidden md:table-cell" : ""}`}>
                     <Button variant="ghost" onClick={() => handleSort(col.key)}>
                       {col.label} <ArrowUpDown />
                     </Button>
@@ -197,7 +198,8 @@ const PersonalViewTable = ({ newsData }) => {
                       ? item.reporter.slice(0, 7) + "..."
                       : item.reporter}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  {/* 변경: 부서 셀은 모바일에서 숨김 */}
+                  <TableCell className="font-medium hidden md:table-cell">
                     {item.department && item.department.trim() ? item.department : "-"}
                   </TableCell>
                   <TableCell>{item.totalViews}</TableCell>

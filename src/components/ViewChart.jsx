@@ -54,9 +54,6 @@ const ViewChart = ({ newsData }) => {
             <CardDescription>매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
           <div className="">
-            {/* <Button variant={activeComponent === "year" ? "secondary" : "ghost"} onClick={() => handleButtonClick("year")}>
-              최근 1년
-            </Button> */}
             <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
               최근 3개월
             </Button>

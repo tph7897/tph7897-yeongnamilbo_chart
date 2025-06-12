@@ -31,7 +31,7 @@ export async function GET(request) {
       .toArray();
 
     if (optimizedArticlesData && optimizedArticlesData.length > 0) {
-      return Response.json(optimizedArticlesData, { status: 200 });
+      return Response.json(optimizedArticlesData, { status: 200, headers: { "Cache-Control": "no-store" } });
     } else {
       return new Response(null, { status: 204 });
     }

@@ -1,3 +1,7 @@
+// 동적 렌더링 활성화를 위해 추가
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { MongoClient } from "mongodb";
 
 export async function GET(request) {

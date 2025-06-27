@@ -42,7 +42,7 @@ export default function Home() {
           <div>
             <ViewChart newsData={allArticles} />
           </div>
-          <div className="m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
+          <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
             <Button 
               variant={activeComponent === "department" ? "secondary" : "ghost"} 
               onClick={() => handleButtonClick("department")}

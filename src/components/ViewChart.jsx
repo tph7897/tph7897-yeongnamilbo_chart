@@ -53,7 +53,7 @@ const ViewChart = ({ newsData }) => {
   // };
 
   return (
-    <Card className="m-2">
+    <Card className="m-0 sm:m-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="flex ">
           <div>

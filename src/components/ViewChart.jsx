@@ -69,7 +69,7 @@ const ViewChart = ({ newsData }) => {
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer className="aspect-auto h-[250px] w-full" config={chartConfig}>
-          <AreaChart data={filteredWeeklyData}>
+          <AreaChart className="-ml-4" data={filteredWeeklyData}>
             <defs>
               <linearGradient id="filltotal" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-total)" stopOpacity={0.8} />

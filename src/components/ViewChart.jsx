@@ -17,6 +17,13 @@ const chartConfig = {
   },
 };
 
+// 숫자를 한글 단위로 변환하는 함수 추가
+function formatKoreanNumber(value) {
+  if (value >= 1e8) return `${Math.round(value / 1e7) / 10}억`;
+  if (value >= 1e4) return `${Math.round(value / 1e3) / 10}만`;
+  return value.toLocaleString();
+}
+
 const ViewChart = ({ newsData }) => {
   const [weeklyData, setWeeklyData] = useState([]);
   const [activeComponent, setActiveComponent] = useState("3month"); // "year" 또는 "3month"
@@ -41,22 +48,22 @@ const ViewChart = ({ newsData }) => {
     return weeklyData.filter((item) => new Date(item.date) >= cutoff);
   }, [weeklyData, activeComponent]);
 
-  const handleButtonClick = (component) => {
-    setActiveComponent(component);
-  };
+  // const handleButtonClick = (component) => {
+  //   setActiveComponent(component);
+  // };
 
   return (
     <Card className="m-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="flex ">
           <div>
-            <CardTitle>부서별 조회수 현황 (주별)</CardTitle>
-            <CardDescription>매주 일요일 ~ 토요일 기준</CardDescription>
+            <CardTitle className="text-base sm:text-lg">부서별 조회수 현황 (주별)</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
           <div className="">
-            <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
+            {/* <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
               최근 3개월
-            </Button>
+            </Button> */}
           </div>
         </div>
       </CardHeader>
@@ -78,7 +85,10 @@ const ViewChart = ({ newsData }) => {
               dataKey="date"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={4}
+              angle={45}
+              textAnchor="middle"
+              tick={{ fontSize: 10, fontFamily: "inherit" }} // 모바일에서 더 작은 폰트
               tickFormatter={(value) => {
                 const date = new Date(value);
                 const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -86,7 +96,14 @@ const ViewChart = ({ newsData }) => {
                 return `${month}.${day}`;
               }}
             />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickCount={3} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickCount={3}
+              tick={{ fontSize: 10, fontFamily: "inherit" }} // 모바일에서 더 작은 폰트
+              tickFormatter={formatKoreanNumber}
+            />
             <ChartTooltip
               cursor={false}
               content={

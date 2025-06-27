@@ -32,13 +32,14 @@ export default function Home() {
 
   return (
     <main>
-      <Card className="m-8">
+      {/* <Card className="m-8">
         <CardHeader>
           <CardTitle>영남일보 조회수 현황</CardTitle>
           <CardDescription></CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="hidden md:block">
+        <CardContent> */}
+          {/* <div className="hidden md:block"> */}
+          <div>
             <ViewChart newsData={allArticles} />
           </div>
           <div className="m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
@@ -69,9 +70,9 @@ export default function Home() {
             {activeComponent === "reporter" && <PersonalViewTable newsData={allArticles} />}
             {activeComponent === "article" && <ArticleViewTable newsData={allArticles} />}
           </div>
-        </CardContent>
+        {/* </CardContent>
         <CardFooter className="flex justify-between"></CardFooter>
-      </Card>
+      </Card> */}
     </main>
   );
 }

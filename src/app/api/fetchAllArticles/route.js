@@ -10,7 +10,7 @@ export async function GET(request) {
   try {
     await client.connect();
     const database = client.db("yeongnam-visits");
-    const articlesCollection = database.collection("full_data");
+    const articlesCollection = database.collection("recent_data");
 
     // 최근 3개월 전 날짜 계산
     const threeMonthsAgo = new Date();
@@ -26,6 +26,7 @@ export async function GET(request) {
       newsclass_names: 1,
       newstitle: 1,
       ref: 1,
+      level: 1,
     };
 
     const optimizedArticlesData = await articlesCollection
@@ -34,8 +35,15 @@ export async function GET(request) {
       .sort({ newsdate: -1 })
       .toArray();
 
-    if (optimizedArticlesData && optimizedArticlesData.length > 0) {
-      return Response.json(optimizedArticlesData, { status: 200, headers: { "Cache-Control": "no-store" } });
+    // newsdate의 시간 부분을 00:00:00.000Z로 통일
+    const normalizedData = optimizedArticlesData.map((article) => ({
+      ...article,
+      newsdate: new Date(new Date(article.newsdate).toDateString()).toISOString(),
+      level: article.level || "5",
+    }));
+
+    if (normalizedData && normalizedData.length > 0) {
+      return Response.json(normalizedData, { status: 200, headers: { "Cache-Control": "no-store" } });
     } else {
       return new Response(null, { status: 204 });
     }

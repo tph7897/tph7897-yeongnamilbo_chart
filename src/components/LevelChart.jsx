@@ -6,30 +6,61 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import transformNewsDataToWeeklyData from "@/app/_utils/transformWeeklyDataToChartData";
 
 const chartConfig = {
-  total: {
-    label: "전체부서",
+  level1: {
+    label: "자체",
     color: "hsl(var(--chart-1))",
   },
-  digital: {
-    label: "디지털뉴스부",
+  level5: {
+    label: "일반",
     color: "hsl(var(--chart-2))",
   },
 };
 
+// level별 주간 데이터로 변환하는 함수
+function transformNewsDataToLevelWeeklyData(newsData) {
+  const weeklyGroups = new Map();
+  
+  newsData.forEach((article) => {
+    const articleDate = new Date(article.newsdate);
+    const day = articleDate.getDay();
+    const diff = 6 - day; // 토요일까지의 차이
+    const saturday = new Date(articleDate);
+    saturday.setDate(articleDate.getDate() + diff);
+    saturday.setHours(0, 0, 0, 0);
+    const weekKey = saturday.toISOString().split('T')[0];
+    
+    if (!weeklyGroups.has(weekKey)) {
+      weeklyGroups.set(weekKey, {
+        date: weekKey,
+        level1: 0,
+        level5: 0,
+      });
+    }
+    
+    const weekData = weeklyGroups.get(weekKey);
+    
+    if (article.level === "1") {
+      weekData.level1 += 1;
+    } else if (article.level === "5") {
+      weekData.level5 += 1;
+    }
+  });
+  
+  return Array.from(weeklyGroups.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
 // 숫자를 한글 단위로 변환하는 함수 추가
 function formatKoreanNumber(value) {
-  if (value >= 1e8) return `${Math.round(value / 1e7) / 10}억`;
-  if (value >= 1e4) return `${Math.round(value / 1e3) / 10}만`;
   return value.toLocaleString();
 }
 
-const ViewChart = ({ newsData }) => {
+const LevelChart = ({ newsData }) => {
   const [weeklyData, setWeeklyData] = useState([]);
   const [activeComponent, setActiveComponent] = useState("3month"); // "year" 또는 "3month"
 
   useEffect(() => {
     if (newsData && newsData.length > 0) {
-      const aggregated = transformNewsDataToWeeklyData(newsData);
+      const aggregated = transformNewsDataToLevelWeeklyData(newsData);
       setWeeklyData(aggregated);
     }
   }, [newsData]);
@@ -54,7 +85,7 @@ const ViewChart = ({ newsData }) => {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="flex ">
           <div>
-            <CardTitle className="text-base sm:text-lg">부서별 조회수 현황 (주별)</CardTitle>
+            <CardTitle className="text-base sm:text-lg">유형별 조회수 현황 (주별)</CardTitle>
             <CardDescription className="text-xs sm:text-sm">매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
           <div className="">
@@ -68,13 +99,13 @@ const ViewChart = ({ newsData }) => {
         <ChartContainer className="aspect-auto h-[250px] w-full" config={chartConfig}>
           <AreaChart className="-ml-4" data={filteredWeeklyData}>
             <defs>
-              <linearGradient id="filltotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-total)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-total)" stopOpacity={0.1} />
+              <linearGradient id="filllevel1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-level1)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-level1)" stopOpacity={0.1} />
               </linearGradient>
-              <linearGradient id="filldigital" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-digital)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-digital)" stopOpacity={0.1} />
+              <linearGradient id="filllevel5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-level5)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-level5)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
@@ -111,12 +142,17 @@ const ViewChart = ({ newsData }) => {
                     const day = String(date.getDate()).padStart(2, "0");
                     return `${month}.${day}`;
                   }}
+                  formatter={(value, name, props) => {
+                    const total = props.payload.level1 + props.payload.level5;
+                    const percentage = total > 0 ? ((props.payload.level1 / total) * 100).toFixed(1) : 0;
+                    return [name === "level1" ? `자체` : "일반", ` ${value} 건`, name === "level1" ? `(전체 대비 ${percentage}%)` : ""];
+                  }}
                   indicator="dot"
                 />
               }
             />
-            <Area dataKey="digital" type="linear" fill="url(#filldigital)" fillOpacity={0.4} stroke="var(--color-digital)" stackId="a" />
-            <Area dataKey="total" type="linear" fill="url(#filltotal)" fillOpacity={0.4} stroke="var(--color-total)" stackId="a" />
+            <Area dataKey="level1" type="linear" fill="url(#filllevel1)" fillOpacity={0.4} stroke="var(--color-level1)" stackId="a" />
+            <Area dataKey="level5" type="linear" fill="url(#filllevel5)" fillOpacity={0.4} stroke="var(--color-level5)" stackId="a" />
           </AreaChart>
         </ChartContainer>
       </CardContent>
@@ -124,4 +160,4 @@ const ViewChart = ({ newsData }) => {
   );
 };
 
-export default ViewChart;
+export default LevelChart;

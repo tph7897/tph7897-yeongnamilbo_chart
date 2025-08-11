@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import ArticleViewTable from "@/components/ArticleViewTable";
 import DepartmentViewTable from "@/components/DepartmentViewTable";
 import { useEffect, useState } from "react";
+import LevelChart from "@/components/LevelChart";
 
 export default function Home() {
   const [allArticles, setAllArticles] = useState([]);
@@ -38,39 +39,33 @@ export default function Home() {
           <CardDescription></CardDescription>
         </CardHeader>
         <CardContent> */}
-          {/* <div className="hidden md:block"> */}
-          <div>
-            <ViewChart newsData={allArticles} />
-          </div>
-          <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
-            <Button 
-              variant={activeComponent === "department" ? "secondary" : "ghost"} 
-              onClick={() => handleButtonClick("department")}
-            >
-              <span className="md:hidden">부서별</span>
-              <span className="hidden md:inline-block">부서별 조회수</span>
-            </Button>
-            <Button 
-              variant={activeComponent === "reporter" ? "secondary" : "ghost"} 
-              onClick={() => handleButtonClick("reporter")}
-            >
-              <span className="md:hidden">기자별</span>
-              <span className="hidden md:inline-block">기자별 조회수</span>
-            </Button>
-            <Button 
-              variant={activeComponent === "article" ? "secondary" : "ghost"} 
-              onClick={() => handleButtonClick("article")}
-            >
-              <span className="md:hidden">기사별</span>
-              <span className="hidden md:inline-block">기사별 조회수</span>
-            </Button>
-          </div>
-          <div className="flex justify-between">
-            {activeComponent === "department" && <DepartmentViewTable newsData={allArticles} />}
-            {activeComponent === "reporter" && <PersonalViewTable newsData={allArticles} />}
-            {activeComponent === "article" && <ArticleViewTable newsData={allArticles} />}
-          </div>
-        {/* </CardContent>
+      {/* <div className="hidden md:block"> */}
+      <div>
+        <LevelChart newsData={allArticles} />
+      </div>
+      <div>
+        <ViewChart newsData={allArticles} />
+      </div>
+      <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
+        <Button variant={activeComponent === "department" ? "secondary" : "ghost"} onClick={() => handleButtonClick("department")}>
+          <span className="md:hidden">부서별</span>
+          <span className="hidden md:inline-block">부서별 조회수</span>
+        </Button>
+        <Button variant={activeComponent === "reporter" ? "secondary" : "ghost"} onClick={() => handleButtonClick("reporter")}>
+          <span className="md:hidden">기자별</span>
+          <span className="hidden md:inline-block">기자별 조회수</span>
+        </Button>
+        <Button variant={activeComponent === "article" ? "secondary" : "ghost"} onClick={() => handleButtonClick("article")}>
+          <span className="md:hidden">기사별</span>
+          <span className="hidden md:inline-block">기사별 조회수</span>
+        </Button>
+      </div>
+      <div className="flex justify-between">
+        {activeComponent === "department" && <DepartmentViewTable newsData={allArticles} />}
+        {activeComponent === "reporter" && <PersonalViewTable newsData={allArticles} />}
+        {activeComponent === "article" && <ArticleViewTable newsData={allArticles} />}
+      </div>
+      {/* </CardContent>
         <CardFooter className="flex justify-between"></CardFooter>
       </Card> */}
     </main>

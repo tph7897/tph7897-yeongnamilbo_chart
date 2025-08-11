@@ -13,6 +13,7 @@ const columns = [
   { label: "분류", key: "category" },
   { label: "부서", key: "department" },
   { label: "기자", key: "reporter" },
+  { label: "유형", key: "level" },
 ];
 
 const ArticleViewTable = ({ newsData }) => {
@@ -77,7 +78,7 @@ const ArticleViewTable = ({ newsData }) => {
     });
     return sorted;
   }, [filteredArticles, sortColumn, sortDirection]);
-  
+  console.log('sortedArticles', sortedArticles)
   return (
     <div className="w-full flex items-center justify-center">
       <Card className="m-2">
@@ -161,6 +162,9 @@ const ArticleViewTable = ({ newsData }) => {
                     {item.reporter && item.reporter.length > 6
                       ? item.reporter.slice(0, 7) + "..."
                       : item.reporter}
+                  </TableCell>
+                  <TableCell>
+                    {item.level === "1" ? "자체" : item.level === "5" ? "일반" : item.level}
                   </TableCell>
                 </TableRow>
               ))}

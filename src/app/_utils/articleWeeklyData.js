@@ -48,6 +48,7 @@ export function transformWeeklyArticles(newsData) {
       reporter: article.byline_gijaname,
       title: article.newstitle,
       totalViews: latestVisitValue,
+      level: article.level || "5",
     };
   }
 

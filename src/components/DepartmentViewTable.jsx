@@ -12,6 +12,7 @@ const columns = [
   { label: "조회수", key: "totalViews" },
   { label: "기사수", key: "articleCount" },
   { label: "평균", key: "averageViews" },
+  { label: "자체비율", key: "level" },
 ];
 
 const DepartmentViewTable = ({ newsData }) => {
@@ -55,14 +56,18 @@ const DepartmentViewTable = ({ newsData }) => {
       if (!item.code_name) return;
       const dept = item.code_name;
       if (!map[dept]) {
-        map[dept] = { department: dept, totalViews: 0, articleCount: 0 };
+        map[dept] = { department: dept, totalViews: 0, articleCount: 0, level1Count: 0 };
       }
       map[dept].totalViews += item.ref;
       map[dept].articleCount += 1;
+      if (item.level === "1") {
+        map[dept].level1Count += 1;
+      }
     });
     return Object.values(map).map((d) => ({
       ...d,
       averageViews: d.articleCount > 0 ? Number((d.totalViews / d.articleCount).toFixed(2)) : 0,
+      level: d.articleCount > 0 ? Number(((d.level1Count / d.articleCount) * 100).toFixed(1)) : 0,
     }));
   }, [weeklyGroups, selectedWeek]);
 
@@ -138,6 +143,7 @@ const DepartmentViewTable = ({ newsData }) => {
                   <TableCell>{item.totalViews}</TableCell>
                   <TableCell>{item.articleCount}</TableCell>
                   <TableCell>{item.averageViews}</TableCell>
+                  <TableCell>{item.level}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>

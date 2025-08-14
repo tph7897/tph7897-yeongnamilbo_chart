@@ -85,7 +85,7 @@ const LevelChart = ({ newsData }) => {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="flex ">
           <div>
-            <CardTitle className="text-base sm:text-lg">유형별 조회수 현황 (주별)</CardTitle>
+            <CardTitle className="text-base sm:text-lg">자체기사 현황 (주별)</CardTitle>
             <CardDescription className="text-xs sm:text-sm">매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
           <div className="">

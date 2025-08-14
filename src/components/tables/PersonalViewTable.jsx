@@ -2,9 +2,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import personBuse from "../app/data/personBuse";
+import personBuse from "@/app/data/personBuse";
 
 const columns = [
   { label: "기자", key: "reporter" },

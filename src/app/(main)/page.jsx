@@ -1,73 +1,63 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import ViewChart from "../../components/ViewChart";
-import PersonalViewTable from "../../components/PersonalViewTable";
 import { Button } from "@/components/ui/button";
-import ArticleViewTable from "@/components/ArticleViewTable";
-import DepartmentViewTable from "@/components/DepartmentViewTable";
-import { useEffect, useState } from "react";
-import LevelChart from "@/components/LevelChart";
+import { useState } from "react";
+import StatsSection from "@/components/sections/StatsSection";
+import ViewsSection from "@/components/sections/ViewsSection";
+
+// 탭 구성 상수
+const TABS = {
+  STATS: "stats",
+  VIEWS: "views"
+};
+
+const TAB_CONFIG = [
+  {
+    id: TABS.STATS,
+    label: "자체기사 통계",
+    component: StatsSection
+  },
+  {
+    id: TABS.VIEWS,
+    label: "조회수",
+    component: ViewsSection
+  }
+];
 
 export default function Home() {
-  const [allArticles, setAllArticles] = useState([]);
-  const [activeComponent, setActiveComponent] = useState("department"); // 초기값 설정
+  const [activeTab, setActiveTab] = useState(TABS.STATS);
 
-  useEffect(() => {
-    fetch("/api/fetchAllArticles")
-      .then((response) => response.json())
-      .then((data) => {
-        setAllArticles(data);
-        console.log("data", data);
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []);
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+  };
 
-  if (allArticles.length === 0) {
-    return <div>Loading...</div>;
-  }
+  const renderTabButtons = () => (
+    <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-2 gap-2 p-2">
+      {TAB_CONFIG.map(({ id, label }) => (
+        <Button
+          key={id}
+          variant={activeTab === id ? "secondary" : "ghost"}
+          onClick={() => handleTabChange(id)}
+        >
+          <span className="md:hidden">{label}</span>
+          <span className="hidden md:inline-block">{label}</span>
+        </Button>
+      ))}
+    </div>
+  );
 
-  const handleButtonClick = (component) => {
-    setActiveComponent(component);
+  const renderActiveSection = () => {
+    const activeTabConfig = TAB_CONFIG.find(tab => tab.id === activeTab);
+    if (!activeTabConfig) return null;
+    
+    const Component = activeTabConfig.component;
+    return <Component />;
   };
 
   return (
     <main>
-      {/* <Card className="m-8">
-        <CardHeader>
-          <CardTitle>영남일보 조회수 현황</CardTitle>
-          <CardDescription></CardDescription>
-        </CardHeader>
-        <CardContent> */}
-      {/* <div className="hidden md:block"> */}
-      <div>
-        <LevelChart newsData={allArticles} />
-      </div>
-      <div>
-        <ViewChart newsData={allArticles} />
-      </div>
-      <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-3 gap-2 p-2">
-        <Button variant={activeComponent === "department" ? "secondary" : "ghost"} onClick={() => handleButtonClick("department")}>
-          <span className="md:hidden">부서별</span>
-          <span className="hidden md:inline-block">부서별 조회수</span>
-        </Button>
-        <Button variant={activeComponent === "reporter" ? "secondary" : "ghost"} onClick={() => handleButtonClick("reporter")}>
-          <span className="md:hidden">기자별</span>
-          <span className="hidden md:inline-block">기자별 조회수</span>
-        </Button>
-        <Button variant={activeComponent === "article" ? "secondary" : "ghost"} onClick={() => handleButtonClick("article")}>
-          <span className="md:hidden">기사별</span>
-          <span className="hidden md:inline-block">기사별 조회수</span>
-        </Button>
-      </div>
-      <div className="flex justify-between">
-        {activeComponent === "department" && <DepartmentViewTable newsData={allArticles} />}
-        {activeComponent === "reporter" && <PersonalViewTable newsData={allArticles} />}
-        {activeComponent === "article" && <ArticleViewTable newsData={allArticles} />}
-      </div>
-      {/* </CardContent>
-        <CardFooter className="flex justify-between"></CardFooter>
-      </Card> */}
+      {renderTabButtons()}
+      {renderActiveSection()}
     </main>
   );
 }

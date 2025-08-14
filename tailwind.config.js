@@ -5,6 +5,24 @@ module.exports = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/lib/**/*.{js,ts}",
+  ],
+  safelist: [
+    // 레벨 관련 클래스들
+    'bg-blue-100',
+    'text-blue-800',
+    'bg-gray-100', 
+    'text-gray-800',
+    'bg-red-100',
+    'text-red-800',
+    // 자체비율 관련 클래스들
+    'bg-green-100',
+    'text-green-800',
+    // 추가 색상 클래스들
+    'bg-yellow-100',
+    'text-yellow-800',
+    'bg-slate-100',
+    'text-slate-800',
   ],
   theme: {
   	extend: {

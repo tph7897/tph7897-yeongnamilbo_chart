@@ -26,7 +26,9 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
         yesterdayArticles: 0,
         yesterdayLevelStats: {},
         todaySelfArticleRatio: 0,
+        yesterdaySelfArticleRatio: 0,
         todaySelfArticles: 0,
+        yesterdaySelfArticles: 0,
         todayGeneralArticles: 0
       };
     }
@@ -61,11 +63,17 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
     // 오늘 자체기사와 일반기사 개수 계산
     const todaySelfArticles = todayArticles.filter(article => article.level === '1').length;
     const todayGeneralArticles = todayArticles.filter(article => article.level === '2').length;
-    const todayTotalRelevantArticles = todaySelfArticles + todayGeneralArticles;
     
-    // 오늘 자체기사 비율 계산
-    const todaySelfArticleRatio = todayTotalRelevantArticles > 0 ? 
-      Math.round((todaySelfArticles / todayTotalRelevantArticles) * 100) : 0;
+    // 어제 자체기사 개수 계산
+    const yesterdaySelfArticles = yesterdayArticles.filter(article => article.level === '1').length;
+    
+    // 오늘 자체기사 비율 계산 (전체 기사 대비)
+    const todaySelfArticleRatio = todayArticles.length > 0 ? 
+      Math.round((todaySelfArticles / todayArticles.length) * 100) : 0;
+    
+    // 어제 자체기사 비율 계산 (전체 기사 대비)
+    const yesterdaySelfArticleRatio = yesterdayArticles.length > 0 ? 
+      Math.round((yesterdaySelfArticles / yesterdayArticles.length) * 100) : 0;
 
     return {
       todayArticles: todayArticles.length,
@@ -73,7 +81,9 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
       yesterdayArticles: yesterdayArticles.length,
       yesterdayLevelStats: calculateLevelStats(yesterdayArticles),
       todaySelfArticleRatio: todaySelfArticleRatio,
+      yesterdaySelfArticleRatio: yesterdaySelfArticleRatio,
       todaySelfArticles: todaySelfArticles,
+      yesterdaySelfArticles: yesterdaySelfArticles,
       todayGeneralArticles: todayGeneralArticles
     };
   }, [newsData]);
@@ -96,7 +106,7 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
   // 레벨별 통계를 문자열로 변환
   const formatLevelStats = (levelStats) => {
     const levels = Object.keys(levelStats).sort();
-    if (levels.length === 0) return "기사 없음";
+    if (levels.length === 0) return <span>기사 없음</span>;
 
     const levelNames = {
       '1': '자체',
@@ -104,9 +114,18 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
       '5': '미분류'
     };
 
-    return levels.map(level => 
-      `${levelNames[level] || `레벨${level}`}: ${levelStats[level]}개`
-    ).join(", ");
+    return (
+      <span>
+        {levels.map((level, index) => (
+          <span key={level}>
+            {index > 0 && ", "}
+            <span className={level === '5' ? 'text-red-600' : ''}>
+              {levelNames[level] || `레벨${level}`}: {levelStats[level]}개
+            </span>
+          </span>
+        ))}
+      </span>
+    );
   };
 
   // 마지막 업데이트 시간 계산
@@ -142,19 +161,21 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
           <Card className="flex-1">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">📰 오늘 기사</CardTitle>
-              <CardDescription className="text-sm text-gray-500">
-                {new Date().toLocaleDateString("ko-KR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}{" "}
+              <CardDescription>
+                <span className="text-black">
+                  {new Date().toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>{" "}
                 출고 현황
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-3xl font-bold text-blue-600">{stats.todayArticles}개</div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="text-xs text-gray-500 mb-1">레벨별 분포</div>
+                <div className="text-xs text-gray-500 mb-1">등급별 분포</div>
                 <div className="text-sm text-gray-700">{formatLevelStats(stats.todayLevelStats)}</div>
               </div>
             </CardContent>
@@ -162,14 +183,14 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
           <Card className="flex-1">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">📊 오늘의 자체기사 비율</CardTitle>
-              <CardDescription className="text-sm text-gray-500">오늘 출고된 기사 중 자체기사 비율</CardDescription>
+              <CardDescription>오늘 전체 출고 기사 중 자체기사 비율</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className={`text-3xl font-bold ${stats.todaySelfArticleRatio >= 35 ? "text-green-600" : "text-red-600"}`}>{stats.todaySelfArticleRatio}%</div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-xs text-gray-500 mb-1">오늘 기사 비율 구성</div>
                 <div className="text-sm text-gray-700">
-                  자체: {stats.todaySelfArticles}개 / 자체 + 일반: {stats.todaySelfArticles + stats.todayGeneralArticles}개
+                  자체: {stats.todaySelfArticles}개 / 전체: {stats.todayArticles}개
                 </div>
               </div>
             </CardContent>
@@ -177,12 +198,17 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
           <Card className="flex-1">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">📅 어제 기사</CardTitle>
-              <CardDescription className="text-sm text-gray-500">{getYesterdayDate()} 출고 현황</CardDescription>
+              <CardDescription className="text-sm text-gray-500">
+                <span className="text-black">{getYesterdayDate()}</span> 출고 기사수와 자체기사 비율
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="text-3xl font-bold text-purple-600">{stats.yesterdayArticles}개</div>
+              <div className="flex items-center gap-8">
+                <div className="text-3xl font-bold text-purple-600">총 {stats.yesterdayArticles}개</div>
+                <div className={`text-3xl font-bold ${stats.yesterdaySelfArticleRatio >= 35 ? "text-green-600" : "text-red-600"}`}>{stats.yesterdaySelfArticleRatio}%</div>
+              </div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="text-xs text-gray-500 mb-1">레벨별 분포</div>
+                <div className="text-xs text-gray-500 mb-1">등급별 분포</div>
                 <div className="text-sm text-gray-700">{formatLevelStats(stats.yesterdayLevelStats)}</div>
               </div>
             </CardContent>

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import DailyArticleStats from "../charts/DailyArticleStats";
 import WebArticleList from "../tables/WebArticleList";
+import BuseChart from "../charts/BuseChart";
 
 const StatsSection = () => {
   const [articlesData, setArticlesData] = useState([]);
@@ -57,6 +58,9 @@ const StatsSection = () => {
       <div>
         <DailyArticleStats newsData={articlesData} />
       </div>
+      {/* <div>
+        <BuseChart newsData={articlesData} />
+      </div> */}
       <div>
         <WebArticleList webArticleData={articlesData} />
       </div>

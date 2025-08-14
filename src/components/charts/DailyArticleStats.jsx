@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { getLevelClass } from "@/lib/tableUtils";
 
 
 
@@ -115,16 +116,16 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
     };
 
     return (
-      <span>
+      <div className="flex flex-wrap gap-1">
         {levels.map((level, index) => (
-          <span key={level}>
-            {index > 0 && ", "}
-            <span className={level === '5' ? 'text-red-600' : ''}>
-              {levelNames[level] || `레벨${level}`}: {levelStats[level]}개
-            </span>
+          <span 
+            key={level}
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getLevelClass(level)}`}
+          >
+            {levelNames[level] || `레벨${level}`}: {levelStats[level]}개
           </span>
         ))}
-      </span>
+      </div>
     );
   };
 
@@ -150,7 +151,11 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
         <div className="flex-1">
           <CardTitle className="text-base sm:text-lg">자체 기사 통계</CardTitle>
           <CardDescription className="text-xs sm:text-sm"> {getLastUpdateTime() && `최종 업데이트: ${getLastUpdateTime()} `}</CardDescription>
-          <CardDescription className="text-xs sm:text-sm"> {`등급1 : 자체, 등급2 : 일반, 등급5 : 미분류`}</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
+            <span className="text-blue-600 font-medium">등급1 : 자체</span>, {' '}
+            <span className="text-gray-600 font-medium">등급2 : 일반</span>, {' '}
+            <span className="text-red-600 font-medium">등급5 : 미분류</span>
+          </CardDescription>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh} className="ml-2">
           <RefreshCw className="h-4 w-4" />
@@ -189,8 +194,13 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
               <div className={`text-3xl font-bold ${stats.todaySelfArticleRatio >= 35 ? "text-green-600" : "text-red-600"}`}>{stats.todaySelfArticleRatio}%</div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-xs text-gray-500 mb-1">오늘 기사 비율 구성</div>
-                <div className="text-sm text-gray-700">
-                  자체: {stats.todaySelfArticles}개 / 전체: {stats.todayArticles}개
+                <div className="flex flex-wrap gap-1">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getLevelClass('1')}`}>
+                    자체: {stats.todaySelfArticles}개
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    전체: {stats.todayArticles}개
+                  </span>
                 </div>
               </div>
             </CardContent>

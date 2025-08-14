@@ -3,7 +3,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import transformNewsDataToWeeklyData from "@/app/_utils/transformWeeklyDataToChartData";
 
 const chartConfig = {
   level1: {
@@ -81,23 +80,18 @@ const LevelChart = ({ newsData }) => {
 
 
   return (
-    <Card className="m-0 sm:m-2">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="flex ">
+    <Card className="m-0 sm:m-2 w-full max-w-7xl mx-auto">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-2 space-y-0 border-b py-5">
+        <div className="flex-1">
           <div>
             <CardTitle className="text-base sm:text-lg">자체기사 현황 (주별)</CardTitle>
             <CardDescription className="text-xs sm:text-sm">매주 일요일 ~ 토요일 기준</CardDescription>
           </div>
-          <div className="">
-            {/* <Button variant={activeComponent === "3month" ? "secondary" : "ghost"} onClick={() => handleButtonClick("3month")}>
-              최근 3개월
-            </Button> */}
-          </div>
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer className="aspect-auto h-[250px] w-full" config={chartConfig}>
-          <AreaChart className="-ml-4" data={filteredWeeklyData}>
+        <ChartContainer className="aspect-auto h-[200px] sm:h-[250px] w-full" config={chartConfig}>
+          <AreaChart className="-ml-2 sm:-ml-4" data={filteredWeeklyData}>
             <defs>
               <linearGradient id="filllevel1" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-level1)" stopOpacity={0.8} />
@@ -116,20 +110,21 @@ const LevelChart = ({ newsData }) => {
               tickMargin={4}
               angle={45}
               textAnchor="middle"
-              tick={{ fontSize: 10, fontFamily: "inherit" }} // 모바일에서 더 작은 폰트
+              tick={{ fontSize: 8, fontFamily: "inherit" }} // 더 작은 폰트
               tickFormatter={(value) => {
                 const date = new Date(value);
                 const month = String(date.getMonth() + 1).padStart(2, "0");
                 const day = String(date.getDate()).padStart(2, "0");
                 return `${month}.${day}`;
               }}
+              interval="preserveStartEnd"
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={4}
               tickCount={3}
-              tick={{ fontSize: 10, fontFamily: "inherit" }} // 모바일에서 더 작은 폰트
+              tick={{ fontSize: 8, fontFamily: "inherit" }}
               tickFormatter={formatKoreanNumber}
             />
             <ChartTooltip

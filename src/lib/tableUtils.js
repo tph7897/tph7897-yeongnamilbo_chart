@@ -33,9 +33,7 @@ export const formatDate = (dateString) => {
 export const formatLevel = (level) => {
   switch (level) {
     case "1": return "자체";
-    case "2": return "일반";
-    case "5": return "미분류";
-    default: return level;
+    default: return "비자체"; // 1등급이 아닌 모든 등급은 비자체
   }
 };
 
@@ -47,9 +45,7 @@ export const formatLevel = (level) => {
 export const getLevelClass = (level) => {
   switch (level) {
     case "1": return "bg-blue-100 text-blue-800"; // 자체
-    case "2": return "bg-gray-100 text-gray-800"; // 일반
-    case "5": 
-    default: return "bg-red-100 text-red-800"; // 미분류
+    default: return "bg-gray-100 text-gray-800"; // 비자체 (기존 일반 스타일 사용)
   }
 };
 
@@ -59,9 +55,13 @@ export const getLevelClass = (level) => {
  * @returns {string} CSS 클래스 문자열
  */
 export const getSelfRatioClass = (selfRatio) => {
-  return selfRatio >= 35 
-    ? "bg-green-100 text-green-800" 
-    : "bg-red-100 text-red-800";
+  if (selfRatio < 30) {
+    return "bg-red-100 text-red-800"; // 29 이하: 붉은색
+  } else if (selfRatio >= 30 && selfRatio <= 39) {
+    return "bg-yellow-100 text-yellow-800"; // 30-39: 노란색
+  } else {
+    return "bg-green-100 text-green-800"; // 40 이상: 녹색
+  }
 };
 
 /**

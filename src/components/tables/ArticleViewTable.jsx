@@ -1,33 +1,53 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ArrowUpDown, CalendarIcon } from "lucide-react";
 import { getNameDepartment } from "@/app/data/userMapping";
 import { getDepartmentNameById } from "@/app/data/departmentMapping";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWeekKey, formatKoreanDate } from "@/lib/dateUtils";
-import { truncateText, formatLevel, getLevelClass } from "@/lib/tableUtils";
-import { useTableSort, useWeekSelection } from "@/hooks/useTable";
+import { formatKoreanDate } from "@/lib/dateUtils";
+import { truncateText, formatLevel, getLevelClass, getSelfRatioClass } from "@/lib/tableUtils";
+import { useTableSort } from "@/hooks/useTable";
+import { cn } from "@/lib/utils";
 
 const COLUMNS = [
   { label: "기사제목", key: "title" },
   { label: "조회수", key: "totalViews" },
   { label: "작성일", key: "newsdate" },
-  { label: "분류", key: "category", hideOnMobile: true },
   { label: "부서", key: "department", hideOnMobile: true },
   { label: "기자", key: "reporter" },
   { label: "유형", key: "level" },
 ];
 
 const ArticleViewTable = ({ newsData }) => {
-  // 뉴스 데이터를 주별 그룹으로 변환
-  const transformToWeeklyGroups = (articles) => {
-    if (!articles?.length) return [];
+  // 선택된 날짜 범위 상태
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // 현재 월 첫날
+    to: new Date() // 오늘
+  });
+  // 캘린더 팝오버 열림 상태
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  
+  // 뉴스 데이터를 날짜 범위별로 필터링 - 성능 최적화
+  const articlesForSelectedDateRange = useMemo(() => {
+    if (!newsData?.length || !dateRange?.from || !dateRange?.to) return [];
 
-    const groups = new Map();
-
-    articles.forEach((article) => {
+    // 날짜 범위를 한 번만 계산
+    const fromTime = dateRange.from.getTime();
+    const toTime = dateRange.to.getTime();
+    
+    const result = [];
+    
+    // 한 번의 루프로 필터링과 변환을 동시에 수행
+    for (const article of newsData) {
+      const articleTime = new Date(article.newsdate).getTime();
+      
+      // 날짜 범위 체크
+      if (articleTime < fromTime || articleTime > toTime) continue;
+      
       // code_name이 빈 문자열이면, buseid 값을 기반으로 부서명 채우기
       if (!article.code_name?.trim()) {
         const buseid = Number(article.buseid);
@@ -37,47 +57,49 @@ const ArticleViewTable = ({ newsData }) => {
         }
       }
 
-      // 주 키 생성
-      const groupKey = getWeekKey(article.newsdate).split('T')[0];
-
-      // 개별 기사 데이터 변환
-      const transformedArticle = {
-        category: Array.isArray(article.newsclass_names)
-          ? article.newsclass_names
-          : article.newsclass_names
-          ? [article.newsclass_names]
-          : [],
+      // 개별 기사 데이터 변환 - 분류 정보 제거로 효율성 향상
+      result.push({
         department: getNameDepartment(article.byline_gijaname) || article.code_name,
-        keyword: article.keyword || "",
         newsdate: formatKoreanDate(article.newsdate),
         newskey: article.newskey,
         reporter: article.byline_gijaname,
         title: article.newstitle,
         totalViews: Number(article.ref) || 0,
         level: article.level || "5",
-      };
+      });
+    }
+    
+    return result;
+  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
 
-      // 그룹에 추가
-      if (groups.has(groupKey)) {
-        groups.get(groupKey).articles.push(transformedArticle);
-      } else {
-        groups.set(groupKey, { datetime: groupKey, articles: [transformedArticle] });
+  // 전체 통계 계산
+  const overallStats = useMemo(() => {
+    if (!newsData?.length || !dateRange?.from || !dateRange?.to) {
+      return { totalArticles: 0, selfArticles: 0, selfRatio: 0 };
+    }
+
+    const fromTime = dateRange.from.getTime();
+    const toTime = dateRange.to.getTime();
+    
+    let totalArticles = 0;
+    let selfArticles = 0;
+    
+    for (const article of newsData) {
+      const articleTime = new Date(article.newsdate).getTime();
+      
+      if (articleTime >= fromTime && articleTime <= toTime) {
+        totalArticles++;
+        const level = Number(article.level) || 5;
+        if (level === 1) {
+          selfArticles++;
+        }
       }
-    });
-
-    // 그룹을 배열로 변환 및 날짜 순 정렬
-    return Array.from(groups.values()).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-  };
-
-  // 주간 데이터 그룹 생성
-  const groups = useMemo(() => transformToWeeklyGroups(newsData), [newsData]);
-
-  // 주 선택 훅
-  const { currentWeek: currentSelectedDatetime, setSelectedWeek: setSelectedDatetime } = useWeekSelection(groups);
-
-  // 선택된 그룹의 기사 배열
-  const selectedGroup = groups.find((group) => group.datetime === currentSelectedDatetime);
-  const articlesForSelectedWeek = selectedGroup?.articles || [];
+    }
+    
+    const selfRatio = totalArticles > 0 ? Math.round((selfArticles / totalArticles) * 100) : 0;
+    
+    return { totalArticles, selfArticles, selfRatio };
+  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
 
   // 부서별 필터링을 위한 상태
   const [selectedDepartment, setSelectedDepartment] = useState("all");
@@ -85,21 +107,25 @@ const ArticleViewTable = ({ newsData }) => {
   // 부서 목록 추출
   const departments = useMemo(() => {
     const deptSet = new Set();
-    articlesForSelectedWeek.forEach((item) => {
+    articlesForSelectedDateRange.forEach((item) => {
       if (item.department) deptSet.add(item.department);
     });
     return Array.from(deptSet).sort();
-  }, [articlesForSelectedWeek]);
+  }, [articlesForSelectedDateRange]);
 
   // 정렬 훅
   const { sortColumn, sortDirection, handleSort } = useTableSort("totalViews", "desc");
+
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50; // 한 페이지당 50개 항목
 
   // 부서 필터링 및 정렬된 기사 목록
   const sortedArticles = useMemo(() => {
     // 부서 필터링
     const filtered = selectedDepartment === "all" 
-      ? articlesForSelectedWeek 
-      : articlesForSelectedWeek.filter((article) => article.department === selectedDepartment);
+      ? articlesForSelectedDateRange 
+      : articlesForSelectedDateRange.filter((article) => article.department === selectedDepartment);
 
     // 정렬
     if (!sortColumn) return filtered;
@@ -116,34 +142,85 @@ const ArticleViewTable = ({ newsData }) => {
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
-  }, [articlesForSelectedWeek, selectedDepartment, sortColumn, sortDirection]);
+  }, [articlesForSelectedDateRange, selectedDepartment, sortColumn, sortDirection]);
+  
+  // 현재 페이지의 데이터만 표시
+  const paginatedArticles = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedArticles.slice(startIndex, endIndex);
+  }, [sortedArticles, currentPage]);
+  
+  // 총 페이지 수 계산
+  const totalPages = Math.ceil(sortedArticles.length / itemsPerPage);
+
+  // 날짜나 필터가 변경될 때 첫 페이지로 이동
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateRange, selectedDepartment]);
   return (
     <div className="w-full flex items-center justify-center">
       <Card className="m-2">
         <CardHeader className="w-full flex items-center border-b py-5 sm:flex-row">
-          <CardTitle className="sm:mr-auto">기사별 조회수 현황</CardTitle>
-          <div className="flex gap-2">
-            <Select 
-              onValueChange={(value) => setSelectedDatetime(value)} 
-              value={currentSelectedDatetime}
-            >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="주 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>주별 선택</SelectLabel>
-                  {groups
-                    .slice()
-                    .reverse()
-                    .map((group) => (
-                      <SelectItem key={group.datetime} value={group.datetime}>
-                        {group.datetime}
-                      </SelectItem>
-                    ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+          <div className="sm:mr-auto">
+            <CardTitle>기사별 조회수 현황</CardTitle>
+            <div className="text-sm mt-1">
+              총 <span className="font-medium">{overallStats.totalArticles.toLocaleString()}건</span> | 
+              자체 <span className="font-medium">{overallStats.selfArticles.toLocaleString()}건</span> | 
+              자체비율 <span className={`px-2 py-1 rounded text-xs font-medium ${getSelfRatioClass(overallStats.selfRatio)}`}>
+                {overallStats.selfRatio}%
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[250px] justify-start text-left font-normal",
+                    !dateRange?.from && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {dateRange.from.toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit', 
+                          day: '2-digit'
+                        })} - {dateRange.to.toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit', 
+                          day: '2-digit'
+                        })}
+                      </>
+                    ) : (
+                      dateRange.from.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit', 
+                        day: '2-digit'
+                      })
+                    )
+                  ) : (
+                    <span>날짜 범위 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("1900-01-01")
+                  }
+                />
+              </PopoverContent>
+            </Popover>
             
             <Select 
               onValueChange={(value) => setSelectedDepartment(value)} 
@@ -185,9 +262,9 @@ const ArticleViewTable = ({ newsData }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedArticles.map((item, index) => (
+              {paginatedArticles.map((item, index) => (
                 <TableRow key={item.newskey}>
-                  <TableCell className="hidden md:table-cell">{index + 1}</TableCell>
+                  <TableCell className="hidden md:table-cell">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                   <TableCell>
                     <a 
                       href={`https://www.yeongnam.com/web/view.php?key=${item.newskey}`} 
@@ -202,9 +279,6 @@ const ArticleViewTable = ({ newsData }) => {
                     {item.totalViews.toLocaleString()}
                   </TableCell>
                   <TableCell>{item.newsdate}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {Array.isArray(item.category) ? item.category.join(", ") : item.category}
-                  </TableCell>
                   <TableCell className="hidden md:table-cell">{item.department}</TableCell>
                   <TableCell>
                     {truncateText(item.reporter)}
@@ -216,7 +290,7 @@ const ArticleViewTable = ({ newsData }) => {
                   </TableCell>
                 </TableRow>
               ))}
-              {sortedArticles.length === 0 && (
+              {paginatedArticles.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={COLUMNS.length + 1} className="text-center text-gray-500 py-8">
                     선택한 조건에 해당하는 기사가 없습니다.
@@ -225,6 +299,31 @@ const ArticleViewTable = ({ newsData }) => {
               )}
             </TableBody>
           </Table>
+          
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 py-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                이전
+              </Button>
+              <span className="text-sm">
+                {currentPage} / {totalPages} 페이지 (총 {sortedArticles.length}건)
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                다음
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

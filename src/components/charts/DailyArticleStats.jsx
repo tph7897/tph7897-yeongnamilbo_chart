@@ -109,22 +109,34 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
     const levels = Object.keys(levelStats).sort();
     if (levels.length === 0) return <span>기사 없음</span>;
 
-    const levelNames = {
-      '1': '자체',
-      '2': '일반', 
-      '5': '미분류'
-    };
+    // 1등급은 자체, 나머지는 비자체로 통합
+    let selfCount = 0;
+    let nonSelfCount = 0;
+    
+    levels.forEach(level => {
+      if (level === '1') {
+        selfCount += levelStats[level];
+      } else {
+        nonSelfCount += levelStats[level];
+      }
+    });
 
     return (
       <div className="flex flex-wrap gap-1">
-        {levels.map((level, index) => (
+        {selfCount > 0 && (
           <span 
-            key={level}
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getLevelClass(level)}`}
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getLevelClass('1')}`}
           >
-            {levelNames[level] || `레벨${level}`}: {levelStats[level]}개
+            자체: {selfCount}개
           </span>
-        ))}
+        )}
+        {nonSelfCount > 0 && (
+          <span 
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getLevelClass('5')}`}
+          >
+            비자체: {nonSelfCount}개
+          </span>
+        )}
       </div>
     );
   };
@@ -153,8 +165,7 @@ const DailyArticleStats = ({ newsData, onRefresh }) => {
           <CardDescription className="text-xs sm:text-sm"> {getLastUpdateTime() && `최종 업데이트: ${getLastUpdateTime()} `}</CardDescription>
           <CardDescription className="text-xs sm:text-sm">
             <span className="text-blue-600 font-medium">등급1 : 자체</span>, {' '}
-            <span className="text-gray-600 font-medium">등급2 : 일반</span>, {' '}
-            <span className="text-red-600 font-medium">등급5 : 미분류</span>
+            <span className="text-gray-600 font-medium">나머지 등급 : 비자체</span>
           </CardDescription>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh} className="ml-2">

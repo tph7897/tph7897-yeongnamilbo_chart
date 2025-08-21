@@ -11,6 +11,7 @@ import { useTableSort } from "@/hooks/useTable";
 
 // 웹출고 기사 목록용 컬럼 배열
 const columns = [
+  { label: "순번", key: "index" },
   { label: "출고일시", key: "newsdate" },
   { label: "제목", key: "newstitle" },
   { label: "작성자", key: "writers" },
@@ -111,6 +112,9 @@ const WebArticleList = ({ webArticleData }) => {
               <TableBody>
                 {sortedWebArticles.map((item, index) => (
                   <TableRow key={item.newskey || item._id || index}>
+                    <TableCell className="text-center font-medium">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="min-w-20">
                       {item.newsdate ? (
                         <div className="text-sm">
@@ -203,9 +207,14 @@ const WebArticleList = ({ webArticleData }) => {
                 <Card key={item.newskey || item._id || index} className="p-4">
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className={`text-sm font-medium flex-1 ${item.embargo_type === "1" ? "text-red-500" : ""}`}>
-                        {item.newstitle || "-"}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-medium">
+                          {index + 1}
+                        </span>
+                        <h3 className={`text-sm font-medium flex-1 ${item.embargo_type === "1" ? "text-red-500" : ""}`}>
+                          {item.newstitle || "-"}
+                        </h3>
+                      </div>
                       <span className={`px-2 py-1 rounded text-xs flex-shrink-0 ${getLevelClass(item.level)}`}>
                         {formatLevel(item.level)}
                       </span>

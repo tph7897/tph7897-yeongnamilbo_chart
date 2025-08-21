@@ -10,29 +10,51 @@ export async function GET(request) {
   try {
     await client.connect();
     const database = client.db("yeongnam-visits");
-    const articlesCollection = database.collection("recent_data");
+    const articlesCollection = database.collection("full_data");
 
-    // 최근 3개월 전 날짜 계산
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    // URL에서 날짜 범위와 제한 수 파라미터 추출
+    const { searchParams } = new URL(request.url);
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
+    const limit = parseInt(searchParams.get('limit') || '50000'); // 기본 50,000건으로 제한
 
-    // 조회할 필드 지정
+    // 날짜 필터 조건 설정
+    let dateFilter = {};
+    if (fromDate && toDate) {
+      dateFilter = {
+        newsdate: {
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate)
+        }
+      };
+    } else {
+      // 기본값: 최근 1년
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      dateFilter = { newsdate: { $gte: oneYearAgo } };
+    }
+
+    // 조회할 필드 지정 (필수 필드만)
     const projection = {
       newsdate: 1,
       newskey: 1,
       code_name: 1,
       byline_gijaname: 1,
+      buseid: 1, // 부서 매핑용 추가
       newsclassid: 1,
-      newsclass_names: 1,
       newstitle: 1,
       ref: 1,
       level: 1,
     };
 
     const optimizedArticlesData = await articlesCollection
-      .find({ ref: { $exists: true }, newsdate: { $gte: threeMonthsAgo } })
+      .find({ 
+        ref: { $exists: true, $ne: null, $ne: 0 }, // ref가 존재하고 null이 아니며 0이 아닌 경우만
+        ...dateFilter 
+      })
       .project(projection)
       .sort({ newsdate: -1 })
+      .limit(limit) // 결과 제한
       .toArray();
 
     // newsdate의 시간 부분을 00:00:00.000Z로 통일

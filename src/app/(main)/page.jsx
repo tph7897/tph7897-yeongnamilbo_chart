@@ -16,12 +16,12 @@ export default function Home() {
     <main>
       <div className="m-0 sm:m-2 rounded-lg border bg-card shadow-sm grid grid-cols-2 gap-2 p-2">
         <Button variant={activeMainComponent === "stats" ? "secondary" : "ghost"} onClick={() => handleMainButtonClick("stats")}>
-          <span className="md:hidden">자체기사 통계</span>
-          <span className="hidden md:inline-block">자체기사 통계</span>
+          <span className="md:hidden">일일 출고현황</span>
+          <span className="hidden md:inline-block">일일 출고현황</span>
         </Button>
         <Button variant={activeMainComponent === "views" ? "secondary" : "ghost"} onClick={() => handleMainButtonClick("views")}>
-          <span className="md:hidden">조회수</span>
-          <span className="hidden md:inline-block">조회수</span>
+          <span className="md:hidden">기사 통계</span>
+          <span className="hidden md:inline-block">기사 통계</span>
         </Button>
       </div>
 

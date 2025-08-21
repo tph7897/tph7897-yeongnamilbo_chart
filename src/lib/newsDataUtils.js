@@ -3,7 +3,7 @@
  */
 import { getNameDepartment } from "@/app/data/userMapping";
 import { getDepartmentNameById } from "@/app/data/departmentMapping";
-import { getWeekKey } from "./dateUtils";
+import { getWeekKey, getMonthKey } from "./dateUtils";
 import { calculateStats } from "./tableUtils";
 
 /**
@@ -82,6 +82,58 @@ export const aggregateReportersByWeek = (newsData) => {
 };
 
 /**
+ * 뉴스 데이터를 월별, 기자별로 집계
+ * @param {Array} newsData - 뉴스 데이터 배열
+ * @returns {Array} 월별 기자 데이터 배열
+ */
+export const aggregateReportersByMonth = (newsData) => {
+  if (!newsData?.length) return [];
+
+  const groups = new Map();
+
+  newsData.forEach((item) => {
+    const reporter = item.byline_gijaname?.trim();
+    if (!reporter) return;
+
+    const department = normalizeDepartment(reporter, item);
+    const monthKey = getMonthKey(item.newsdate);
+
+    if (!groups.has(monthKey)) {
+      groups.set(monthKey, new Map());
+    }
+
+    const monthGroup = groups.get(monthKey);
+    if (!monthGroup.has(reporter)) {
+      monthGroup.set(reporter, {
+        reporter,
+        department,
+        totalViews: 0,
+        articleCount: 0,
+        selfArticleCount: 0,
+      });
+    }
+
+    const reporterStats = monthGroup.get(reporter);
+    reporterStats.totalViews += Number(item.ref) || 0;
+    reporterStats.articleCount += 1;
+    
+    if (item.level === "1") {
+      reporterStats.selfArticleCount += 1;
+    }
+  });
+
+  return Array.from(groups.entries())
+    .map(([monthKey, reportersMap]) => ({
+      datetime: monthKey,
+      reporters: Array.from(reportersMap.values()).map(stats => ({
+        ...stats,
+        ...calculateStats(stats),
+      })),
+    }))
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+};
+
+/**
  * 뉴스 데이터를 주별, 부서별로 집계
  * @param {Array} newsData - 뉴스 데이터 배열
  * @returns {Array} 주별 그룹 배열
@@ -106,6 +158,40 @@ export const aggregateDepartmentsByWeek = (newsData) => {
     }
     
     groups.get(weekKey).push({
+      ...item,
+      code_name: department
+    });
+  });
+
+  return Array.from(groups.entries())
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+};
+
+/**
+ * 뉴스 데이터를 월별, 부서별로 집계
+ * @param {Array} newsData - 뉴스 데이터 배열
+ * @returns {Array} 월별 그룹 배열
+ */
+export const aggregateDepartmentsByMonth = (newsData) => {
+  if (!newsData?.length) return [];
+
+  const groups = new Map();
+  
+  newsData.forEach((item) => {
+    let department = item.code_name;
+    if (!department?.trim()) {
+      const buseid = Number(item.buseid);
+      department = getDepartmentNameById(buseid);
+      if (department === "알 수 없음") return;
+    }
+
+    const monthKey = getMonthKey(item.newsdate);
+
+    if (!groups.has(monthKey)) {
+      groups.set(monthKey, []);
+    }
+    
+    groups.get(monthKey).push({
       ...item,
       code_name: department
     });

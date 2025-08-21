@@ -9,10 +9,9 @@
  */
 export const getWeekSaturday = (date) => {
   const d = new Date(date);
-  const diff = 6 - d.getDay(); // 토요일까지 남은 일수
-  const saturday = new Date(d);
-  saturday.setDate(d.getDate() + diff);
-  saturday.setHours(0, 0, 0, 0);
+  // UTC 시간대 문제 해결을 위해 UTC 메서드 사용
+  const diff = 6 - d.getUTCDay(); // 토요일까지 남은 일수
+  const saturday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff));
   return saturday;
 };
 
@@ -48,5 +47,30 @@ export const formatDate = (dateString) => {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
+  });
+};
+
+/**
+ * 주어진 날짜의 월 키 생성 (해당 월의 첫 번째 날 기준)
+ * @param {Date|string} date - 계산할 날짜
+ * @returns {string} 월 키 (ISO 문자열)
+ */
+export const getMonthKey = (date) => {
+  const d = new Date(date);
+  // UTC 시간대 문제 해결을 위해 UTC 메서드 사용
+  const firstDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+  return firstDay.toISOString();
+};
+
+/**
+ * 월 키를 한국어 형식으로 포맷 (YYYY년 MM월)
+ * @param {string} monthKey - 월 키 (ISO 문자열)
+ * @returns {string} 포맷된 월 문자열
+ */
+export const formatMonth = (monthKey) => {
+  const date = new Date(monthKey);
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long'
   });
 };

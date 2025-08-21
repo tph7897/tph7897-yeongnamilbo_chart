@@ -5,38 +5,56 @@ import ViewChart from "../charts/ViewChart";
 import DepartmentViewTable from "../tables/DepartmentViewTable";
 import PersonalViewTable from "../tables/PersonalViewTable";
 import ArticleViewTable from "../tables/ArticleViewTable";
+import { useSmartDataLoader } from "@/hooks/useDataCache";
 
 const ViewsSection = () => {
   const [activeViewComponent, setActiveViewComponent] = useState("department");
-  const [allArticles, setAllArticles] = useState([]);
-  const [isLoadingViews, setIsLoadingViews] = useState(true);
+  
+  // 기본 파라미터 설정
+  const defaultParams = {
+    from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(),
+    to: new Date().toISOString(),
+    limit: '50000'
+  };
+  
+  // 스마트 데이터 로더 사용
+  const { data: allArticles, isLoading: isLoadingViews, error, loadData } = useSmartDataLoader(defaultParams);
 
-  // 컴포넌트가 마운트될 때 데이터 fetch
+  // 컴포넌트가 마운트될 때 데이터 로드
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("/api/fetchAllArticles");
-        const data = await response.json();
-        setAllArticles(data);
-        console.log("ViewsSection data:", data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoadingViews(false);
-      }
-    };
-
-    fetchData();
+    loadData(defaultParams);
   }, []);
 
   const handleViewButtonClick = (component) => {
     setActiveViewComponent(component);
   };
 
-  if (isLoadingViews || allArticles.length === 0) {
+  if (isLoadingViews) {
+    return (
+      <div className="flex flex-col justify-center items-center py-16 space-y-4">
+        <div className="text-lg">데이터를 불러오는 중...</div>
+        <div className="w-64 bg-gray-200 rounded-full h-2">
+          <div className="bg-blue-600 h-2 rounded-full animate-pulse"></div>
+        </div>
+        <div className="text-sm text-gray-500">최근 1년 데이터를 로드하고 있습니다</div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center py-16 space-y-4">
+        <div className="text-lg text-red-600">데이터 로딩 중 오류가 발생했습니다</div>
+        <div className="text-sm text-gray-500">{error}</div>
+        <Button onClick={() => loadData(defaultParams)}>다시 시도</Button>
+      </div>
+    );
+  }
+
+  if (!allArticles || allArticles.length === 0) {
     return (
       <div className="flex justify-center items-center py-16">
-        <div className="text-lg">데이터를 불러오는 중...</div>
+        <div className="text-lg">표시할 데이터가 없습니다</div>
       </div>
     );
   }

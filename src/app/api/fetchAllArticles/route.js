@@ -4,6 +4,37 @@ export const revalidate = 0;
 
 import { MongoClient } from "mongodb";
 
+// 문자열 정제 함수
+function sanitizeString(str) {
+  if (typeof str !== 'string') return str;
+  
+  return str
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // 제어 문자 제거
+    .replace(/[\\"]/g, '') // 백슬래시와 따옴표 제거
+    .replace(/\n/g, ' ') // 줄바꿈을 공백으로 변경
+    .replace(/\r/g, ' ') // 캐리지 리턴을 공백으로 변경
+    .replace(/\t/g, ' ') // 탭을 공백으로 변경
+    .replace(/\s+/g, ' ') // 연속된 공백을 하나로 축소
+    .trim(); // 앞뒤 공백 제거
+}
+
+// 객체의 모든 문자열 필드를 정제하는 함수
+function sanitizeObject(obj) {
+  const sanitized = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      sanitized[key] = sanitizeString(value);
+    } else if (Array.isArray(value)) {
+      sanitized[key] = value.map(item => 
+        typeof item === 'string' ? sanitizeString(item) : item
+      );
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 export async function GET(request) {
   const client = new MongoClient(process.env.NEXT_PUBLIC_MONGO_DB_URL);
 
@@ -57,15 +88,37 @@ export async function GET(request) {
       .limit(limit) // 결과 제한
       .toArray();
 
-    // newsdate의 시간 부분을 00:00:00.000Z로 통일
-    const normalizedData = optimizedArticlesData.map((article) => ({
-      ...article,
-      newsdate: new Date(new Date(article.newsdate).toDateString()).toISOString(),
-      level: article.level || "5",
-    }));
+    // newsdate의 시간 부분을 00:00:00.000Z로 통일하고 문자열 정제
+    const normalizedData = optimizedArticlesData.map((article) => {
+      // 기본 정규화
+      const normalized = {
+        ...article,
+        newsdate: new Date(new Date(article.newsdate).toDateString()).toISOString(),
+        level: article.level || "5",
+      };
+      
+      // 문자열 필드 정제
+      return sanitizeObject(normalized);
+    });
 
     if (normalizedData && normalizedData.length > 0) {
-      return Response.json(normalizedData, { status: 200, headers: { "Cache-Control": "no-store" } });
+      // JSON 직렬화를 안전하게 처리
+      try {
+        const jsonData = JSON.stringify(normalizedData);
+        return new Response(jsonData, { 
+          status: 200, 
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store" 
+          } 
+        });
+      } catch (jsonError) {
+        console.error("JSON serialization error:", jsonError);
+        return Response.json({
+          message: "Data serialization error",
+          error: "Unable to serialize data to JSON"
+        }, { status: 500 });
+      }
     } else {
       return new Response(null, { status: 204 });
     }

@@ -64,11 +64,31 @@ export const useSmartDataLoader = (initialParams) => {
       const queryParams = new URLSearchParams(params);
       const response = await fetch(`/api/fetchAllArticles?${queryParams}`);
       
+      setLoadingProgress(70);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const result = await response.json();
+      // 응답이 비어있는 경우 처리
+      if (response.status === 204) {
+        setData([]);
+        return [];
+      }
+      
+      // 안전한 JSON 파싱
+      let result;
+      try {
+        const text = await response.text();
+        if (!text.trim()) {
+          setData([]);
+          return [];
+        }
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error('JSON parsing error:', parseError);
+        throw new Error('서버에서 받은 데이터를 처리할 수 없습니다. 데이터에 잘못된 문자가 포함되어 있을 수 있습니다.');
+      }
       
       // 캐시에 저장
       setCachedData(cacheKey, result);

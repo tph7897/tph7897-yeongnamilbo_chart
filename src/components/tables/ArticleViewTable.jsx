@@ -70,7 +70,7 @@ const ArticleViewTable = ({ newsData }) => {
     }
     
     return result;
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
   // 전체 통계 계산
   const overallStats = useMemo(() => {
@@ -99,7 +99,7 @@ const ArticleViewTable = ({ newsData }) => {
     const selfRatio = totalArticles > 0 ? Math.round((selfArticles / totalArticles) * 100) : 0;
     
     return { totalArticles, selfArticles, selfRatio };
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
   // 부서별 필터링을 위한 상태
   const [selectedDepartment, setSelectedDepartment] = useState("all");

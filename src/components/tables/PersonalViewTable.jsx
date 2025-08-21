@@ -103,7 +103,7 @@ const PersonalViewTable = ({ newsData }) => {
         ? Math.round(reporter.totalViews / reporter.articleCount) 
         : 0
     }));
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
   // 전체 통계 계산
   const overallStats = useMemo(() => {
@@ -132,7 +132,7 @@ const PersonalViewTable = ({ newsData }) => {
     const selfRatio = totalArticles > 0 ? Math.round((selfArticles / totalArticles) * 100) : 0;
     
     return { totalArticles, selfArticles, selfRatio };
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
     // 부서 필터링 훅
   const { departmentOptions, selectedDepartment, setSelectedDepartment, filteredData } = 

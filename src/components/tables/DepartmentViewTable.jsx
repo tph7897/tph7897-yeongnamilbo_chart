@@ -88,7 +88,7 @@ const DepartmentViewTable = ({ newsData }) => {
         ? Math.round(dept.totalViews / dept.articleCount) 
         : 0
     }));
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
   // 전체 통계 계산
   const overallStats = useMemo(() => {
@@ -117,7 +117,7 @@ const DepartmentViewTable = ({ newsData }) => {
     const selfRatio = totalArticles > 0 ? Math.round((selfArticles / totalArticles) * 100) : 0;
     
     return { totalArticles, selfArticles, selfRatio };
-  }, [newsData, dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  }, [newsData, dateRange.from, dateRange.to]);
 
   // 정렬 훅
   const { handleSort, sortData } = useTableSort("averageViews", "desc");

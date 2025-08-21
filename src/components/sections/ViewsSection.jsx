@@ -5,31 +5,55 @@ import ViewChart from "../charts/ViewChart";
 import DepartmentViewTable from "../tables/DepartmentViewTable";
 import PersonalViewTable from "../tables/PersonalViewTable";
 import ArticleViewTable from "../tables/ArticleViewTable";
-import { useSmartDataLoader } from "@/hooks/useDataCache";
 
 const ViewsSection = () => {
   const [activeViewComponent, setActiveViewComponent] = useState("department");
-  
-  // 기본 파라미터 설정
-  const defaultParams = {
-    from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(),
-    to: new Date().toISOString(),
-    limit: '50000'
-  };
-  
-  // 스마트 데이터 로더 사용
-  const { data: allArticles, isLoading: isLoadingViews, error, loadData } = useSmartDataLoader(defaultParams);
+  const [allArticles, setAllArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 컴포넌트가 마운트될 때 데이터 로드
+  // 데이터 로드 함수
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // 1년 전 날짜 계산
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      
+      const params = new URLSearchParams({
+        from: oneYearAgo.toISOString(),
+        to: new Date().toISOString()
+      });
+
+      const response = await fetch(`/api/fetchAllArticles?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setAllArticles(data || []);
+    } catch (err) {
+      console.error('데이터 로딩 오류:', err);
+      setError(err.message);
+      setAllArticles([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
-    loadData(defaultParams);
+    loadData();
   }, []);
 
   const handleViewButtonClick = (component) => {
     setActiveViewComponent(component);
   };
 
-  if (isLoadingViews) {
+  if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center py-16 space-y-4">
         <div className="text-lg">데이터를 불러오는 중...</div>
@@ -46,7 +70,7 @@ const ViewsSection = () => {
       <div className="flex flex-col justify-center items-center py-16 space-y-4">
         <div className="text-lg text-red-600">데이터 로딩 중 오류가 발생했습니다</div>
         <div className="text-sm text-gray-500">{error}</div>
-        <Button onClick={() => loadData(defaultParams)}>다시 시도</Button>
+        <Button onClick={loadData}>다시 시도</Button>
       </div>
     );
   }

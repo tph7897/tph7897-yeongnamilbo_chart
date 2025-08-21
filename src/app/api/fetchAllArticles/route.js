@@ -16,7 +16,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const fromDate = searchParams.get('from');
     const toDate = searchParams.get('to');
-    const limit = parseInt(searchParams.get('limit') || '50000'); // 기본 50,000건으로 제한
+    const limit = parseInt(searchParams.get('limit') || '10000'); // 기본 10,000건으로 제한
 
     // 날짜 필터 조건 설정
     let dateFilter = {};
@@ -28,20 +28,19 @@ export async function GET(request) {
         }
       };
     } else {
-      // 기본값: 최근 1년
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      dateFilter = { newsdate: { $gte: oneYearAgo } };
+      // 기본값: 최근 6개월 (성능 최적화)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      dateFilter = { newsdate: { $gte: sixMonthsAgo } };
     }
 
-    // 조회할 필드 지정 (필수 필드만)
+    // 조회할 필드 지정 (필수 필드만 - 성능 최적화)
     const projection = {
       newsdate: 1,
       newskey: 1,
       code_name: 1,
       byline_gijaname: 1,
       buseid: 1, // 부서 매핑용 추가
-      newsclassid: 1,
       newstitle: 1,
       ref: 1,
       level: 1,

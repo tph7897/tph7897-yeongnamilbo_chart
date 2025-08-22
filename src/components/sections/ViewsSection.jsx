@@ -60,7 +60,7 @@ const ViewsSection = () => {
         <div className="w-64 bg-gray-200 rounded-full h-2">
           <div className="bg-blue-600 h-2 rounded-full animate-pulse"></div>
         </div>
-        <div className="text-sm text-gray-500">최근 1년 데이터를 로드하고 있습니다</div>
+        <div className="text-sm text-gray-500">최근 3개월 데이터를 로드하고 있습니다</div>
       </div>
     );
   }

@@ -10,13 +10,13 @@ export async function GET(request) {
   try {
     await client.connect();
     const database = client.db("yeongnam-visits");
-    const articlesCollection = database.collection("full_data");
+    const articlesCollection = database.collection("recent_data");
 
     // URL에서 날짜 범위와 제한 수 파라미터 추출
     const { searchParams } = new URL(request.url);
     const fromDate = searchParams.get('from');
     const toDate = searchParams.get('to');
-    const limit = parseInt(searchParams.get('limit') || '10000'); // 기본 10,000건으로 제한
+    const limit = parseInt(searchParams.get('limit') || '50000'); // 기본 50,000건으로 제한
 
     // 날짜 필터 조건 설정
     let dateFilter = {};
@@ -30,7 +30,7 @@ export async function GET(request) {
     } else {
       // 기본값: 최근 6개월 (성능 최적화)
       const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 3);
       dateFilter = { newsdate: { $gte: sixMonthsAgo } };
     }
 
